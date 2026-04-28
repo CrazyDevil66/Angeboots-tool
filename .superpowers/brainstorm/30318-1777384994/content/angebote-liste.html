@@ -1,0 +1,115 @@
+<h2>Wie sollen Angebote in der Liste dargestellt werden?</h2>
+<p class="subtitle">Beide Varianten haben Status-Filter-Tabs oben — der Unterschied liegt in der Darstellung</p>
+
+<div class="split">
+
+  <!-- Option A: Tabelle -->
+  <div class="mockup" data-choice="a" onclick="toggleSelect(this)" style="cursor:pointer;border:2px solid transparent;border-radius:10px;transition:border-color 0.2s" onmouseenter="this.style.borderColor='#4f46e5'" onmouseleave="if(!this.classList.contains('selected'))this.style.borderColor='transparent'">
+    <div class="mockup-header">A — Kompakte Tabelle</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden;font-size:11px">
+      <!-- Filter Tabs -->
+      <div style="display:flex;gap:2px;padding:10px 12px;border-bottom:1px solid #e2e8f0;background:#f8fafc">
+        <div style="background:#4f46e5;color:white;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600">Alle (12)</div>
+        <div style="color:#64748b;padding:4px 10px;border-radius:20px;font-size:10px">Entwurf (3)</div>
+        <div style="color:#64748b;padding:4px 10px;border-radius:20px;font-size:10px">Gesendet (4)</div>
+        <div style="color:#64748b;padding:4px 10px;border-radius:20px;font-size:10px">Angenommen (4)</div>
+      </div>
+      <!-- Table Header -->
+      <div style="display:grid;grid-template-columns:90px 1fr 90px 80px 70px;gap:0;background:#f1f5f9;padding:6px 12px;font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">
+        <span>Nummer</span><span>Kunde · Betreff</span><span style="text-align:right">Betrag</span><span style="text-align:center">Status</span><span style="text-align:center">Aktion</span>
+      </div>
+      <!-- Rows -->
+      <div style="display:grid;grid-template-columns:90px 1fr 90px 80px 70px;gap:0;padding:8px 12px;border-bottom:1px solid #f1f5f9;align-items:center">
+        <span style="font-size:10px;font-weight:600;color:#0f172a">A-2026-004</span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:#0f172a">Müller GmbH</div>
+          <div style="font-size:9px;color:#94a3b8">Büroausstattung 2026</div>
+        </div>
+        <span style="font-size:10px;font-weight:600;color:#0f172a;text-align:right">8.400 €</span>
+        <div style="display:flex;justify-content:center"><span style="background:#dcfce7;color:#16a34a;padding:2px 7px;border-radius:10px;font-size:8.5px;font-weight:600">Angenommen</span></div>
+        <div style="display:flex;justify-content:center;gap:4px">
+          <div style="width:22px;height:22px;background:#f1f5f9;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px">✎</div>
+          <div style="width:22px;height:22px;background:#f1f5f9;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px">↓</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:90px 1fr 90px 80px 70px;gap:0;padding:8px 12px;border-bottom:1px solid #f1f5f9;align-items:center;background:#fafafa">
+        <span style="font-size:10px;font-weight:600;color:#0f172a">A-2026-003</span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:#0f172a">Schmidt AG</div>
+          <div style="font-size:9px;color:#94a3b8">IT-Infrastruktur</div>
+        </div>
+        <span style="font-size:10px;font-weight:600;color:#0f172a;text-align:right">3.200 €</span>
+        <div style="display:flex;justify-content:center"><span style="background:#dbeafe;color:#1d4ed8;padding:2px 7px;border-radius:10px;font-size:8.5px;font-weight:600">Gesendet</span></div>
+        <div style="display:flex;justify-content:center;gap:4px">
+          <div style="width:22px;height:22px;background:#f1f5f9;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px">✎</div>
+          <div style="width:22px;height:22px;background:#f1f5f9;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px">↓</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:90px 1fr 90px 80px 70px;gap:0;padding:8px 12px;align-items:center">
+        <span style="font-size:10px;font-weight:600;color:#0f172a">A-2026-002</span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:#0f172a">Weber KG</div>
+          <div style="font-size:9px;color:#94a3b8">Umbau Lager</div>
+        </div>
+        <span style="font-size:10px;font-weight:600;color:#0f172a;text-align:right">1.850 €</span>
+        <div style="display:flex;justify-content:center"><span style="background:#f1f5f9;color:#64748b;padding:2px 7px;border-radius:10px;font-size:8.5px;font-weight:600">Entwurf</span></div>
+        <div style="display:flex;justify-content:center;gap:4px">
+          <div style="width:22px;height:22px;background:#f1f5f9;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px">✎</div>
+          <div style="width:22px;height:22px;background:#f1f5f9;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px">↓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B: Karten -->
+  <div class="mockup" data-choice="b" onclick="toggleSelect(this)" style="cursor:pointer;border:2px solid transparent;border-radius:10px;transition:border-color 0.2s" onmouseenter="this.style.borderColor='#4f46e5'" onmouseleave="if(!this.classList.contains('selected'))this.style.borderColor='transparent'">
+    <div class="mockup-header">B — Karten-Grid</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden;font-size:11px">
+      <!-- Filter Tabs -->
+      <div style="display:flex;gap:2px;padding:10px 12px;border-bottom:1px solid #e2e8f0;background:#f8fafc">
+        <div style="background:#4f46e5;color:white;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600">Alle (12)</div>
+        <div style="color:#64748b;padding:4px 10px;border-radius:20px;font-size:10px">Entwurf (3)</div>
+        <div style="color:#64748b;padding:4px 10px;border-radius:20px;font-size:10px">Gesendet (4)</div>
+      </div>
+      <!-- Cards -->
+      <div style="padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;border-top:3px solid #10b981">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div style="font-size:9px;color:#94a3b8">A-2026-004</div>
+            <span style="background:#dcfce7;color:#16a34a;padding:1px 6px;border-radius:10px;font-size:8px;font-weight:600">Angenommen</span>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:2px">Müller GmbH</div>
+          <div style="font-size:9px;color:#64748b;margin-bottom:8px">Büroausstattung 2026</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">8.400 €</div>
+          <div style="font-size:8px;color:#94a3b8">28.4.2026</div>
+        </div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;border-top:3px solid #3b82f6">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div style="font-size:9px;color:#94a3b8">A-2026-003</div>
+            <span style="background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:10px;font-size:8px;font-weight:600">Gesendet</span>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:2px">Schmidt AG</div>
+          <div style="font-size:9px;color:#64748b;margin-bottom:8px">IT-Infrastruktur</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">3.200 €</div>
+          <div style="font-size:8px;color:#94a3b8">26.4.2026</div>
+        </div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;border-top:3px solid #94a3b8">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+            <div style="font-size:9px;color:#94a3b8">A-2026-002</div>
+            <span style="background:#f1f5f9;color:#64748b;padding:1px 6px;border-radius:10px;font-size:8px;font-weight:600">Entwurf</span>
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#0f172a;margin-bottom:2px">Weber KG</div>
+          <div style="font-size:9px;color:#64748b;margin-bottom:8px">Umbau Lager</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">1.850 €</div>
+          <div style="font-size:8px;color:#94a3b8">20.4.2026</div>
+        </div>
+        <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:10px;border-top:3px solid #f59e0b;opacity:0.5">
+          <div style="font-size:8.5px;color:#94a3b8;text-align:center;padding:16px 0">+ weitere…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">👆 Klick eine Variante an oder antworte im Terminal.<br>Tipp: A ist kompakter und zeigt mehr Angebote auf einmal — B ist visuell ansprechender aber weniger dicht.</p>

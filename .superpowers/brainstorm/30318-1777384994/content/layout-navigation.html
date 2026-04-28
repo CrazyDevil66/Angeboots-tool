@@ -1,0 +1,184 @@
+<h2>Welches Navigation-Layout soll das Tool bekommen?</h2>
+<p class="subtitle">Wähle den Grundaufbau, der am besten zu einem professionellen Angebots-Tool passt</p>
+
+<div class="cards">
+
+  <!-- Option A: Dark Sidebar -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:12px;border-bottom:1px solid #e2e8f0;">
+      <div style="display:flex;height:220px;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.12)">
+        <!-- Sidebar -->
+        <div style="width:56px;background:#0f172a;display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px;flex-shrink:0">
+          <div style="width:32px;height:32px;background:#4f46e5;border-radius:8px;margin-bottom:8px"></div>
+          <div style="width:32px;height:32px;background:#4f46e5;border-radius:6px;opacity:0.9"></div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.08);border-radius:6px"></div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.08);border-radius:6px"></div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.08);border-radius:6px"></div>
+          <div style="flex:1"></div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.08);border-radius:6px"></div>
+        </div>
+        <!-- Content -->
+        <div style="flex:1;background:#f8fafc;padding:14px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+            <div style="background:white;border-radius:6px;height:44px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:9px;color:#64748b;font-weight:600">UMSATZ</div>
+              <div style="font-size:13px;color:#1e293b;font-weight:700">24.830 €</div>
+            </div>
+            <div style="background:white;border-radius:6px;height:44px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:9px;color:#64748b;font-weight:600">ANGEBOTE</div>
+              <div style="font-size:13px;color:#1e293b;font-weight:700">12</div>
+            </div>
+            <div style="background:white;border-radius:6px;height:44px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:9px;color:#64748b;font-weight:600">ANGENOMMEN</div>
+              <div style="font-size:13px;color:#10b981;font-weight:700">7</div>
+            </div>
+            <div style="background:white;border-radius:6px;height:44px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:9px;color:#64748b;font-weight:600">KUNDEN</div>
+              <div style="font-size:13px;color:#1e293b;font-weight:700">5</div>
+            </div>
+          </div>
+          <div style="background:white;border-radius:6px;border:1px solid #e2e8f0;overflow:hidden">
+            <div style="padding:8px 10px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:10px;font-weight:700;color:#1e293b">Letzte Angebote</span>
+              <div style="background:#4f46e5;border-radius:4px;padding:2px 8px;font-size:8px;color:white;font-weight:600">+ Neu</div>
+            </div>
+            <div style="padding:6px 10px;font-size:9px;color:#64748b;border-bottom:1px solid #f8fafc;display:flex;justify-content:space-between">
+              <span>A-2026-003 · Müller GmbH</span><span style="color:#10b981;font-weight:600">Angenommen</span>
+            </div>
+            <div style="padding:6px 10px;font-size:9px;color:#64748b;border-bottom:1px solid #f8fafc;display:flex;justify-content:space-between">
+              <span>A-2026-002 · Schmidt AG</span><span style="color:#3b82f6;font-weight:600">Gesendet</span>
+            </div>
+            <div style="padding:6px 10px;font-size:9px;color:#64748b;display:flex;justify-content:space-between">
+              <span>A-2026-001 · Weber KG</span><span style="color:#94a3b8;font-weight:600">Entwurf</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Schmale Icon-Sidebar</h3>
+      <p>Kompakte Dark-Sidebar mit Icons. Maximale Inhaltsfläche. Sehr clean, modernes SaaS-Gefühl. Beschriftungen erscheinen als Tooltip.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Breite Sidebar mit Labels -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:12px;border-bottom:1px solid #e2e8f0;">
+      <div style="display:flex;height:220px;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.12)">
+        <!-- Sidebar -->
+        <div style="width:130px;background:#1e1b4b;display:flex;flex-direction:column;padding:12px 8px;gap:2px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:6px;padding:6px;margin-bottom:8px">
+            <div style="width:24px;height:24px;background:#4f46e5;border-radius:6px;flex-shrink:0"></div>
+            <div>
+              <div style="font-size:9px;font-weight:700;color:white">AngebotsTool</div>
+              <div style="font-size:7px;color:#a5b4fc">Objektrausch</div>
+            </div>
+          </div>
+          <div style="background:#4338ca;border-radius:6px;padding:6px 8px;display:flex;align-items:center;gap:6px">
+            <div style="width:12px;height:12px;background:#a5b4fc;border-radius:2px"></div>
+            <span style="font-size:9px;color:white;font-weight:600">Dashboard</span>
+          </div>
+          <div style="padding:6px 8px;display:flex;align-items:center;gap:6px">
+            <div style="width:12px;height:12px;background:rgba(255,255,255,0.3);border-radius:2px"></div>
+            <span style="font-size:9px;color:#a5b4fc">Angebote</span>
+          </div>
+          <div style="padding:6px 8px;display:flex;align-items:center;gap:6px">
+            <div style="width:12px;height:12px;background:rgba(255,255,255,0.3);border-radius:2px"></div>
+            <span style="font-size:9px;color:#a5b4fc">Kunden</span>
+          </div>
+          <div style="flex:1"></div>
+          <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;border-top:1px solid rgba(255,255,255,0.1);padding-top:10px;margin-top:4px">
+            <div style="width:12px;height:12px;background:rgba(255,255,255,0.3);border-radius:2px"></div>
+            <span style="font-size:9px;color:#a5b4fc">Einstellungen</span>
+          </div>
+        </div>
+        <!-- Content -->
+        <div style="flex:1;background:#f8fafc;padding:12px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:700;color:#0f172a">Dashboard</div>
+            <div style="background:#4f46e5;border-radius:6px;padding:4px 10px;font-size:9px;color:white;font-weight:600">+ Neues Angebot</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <div style="background:white;border-radius:6px;height:38px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:8px;color:#64748b">Gesamtumsatz</div>
+              <div style="font-size:12px;color:#1e293b;font-weight:700">24.830 €</div>
+            </div>
+            <div style="background:white;border-radius:6px;height:38px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:8px;color:#64748b">Offene Angebote</div>
+              <div style="font-size:12px;color:#f59e0b;font-weight:700">5</div>
+            </div>
+          </div>
+          <div style="background:white;border-radius:6px;border:1px solid #e2e8f0;overflow:hidden;font-size:9px">
+            <div style="padding:7px 10px;background:#f8fafc;font-weight:700;color:#374151;border-bottom:1px solid #e2e8f0">Letzte Aktivität</div>
+            <div style="padding:6px 10px;color:#64748b;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between"><span>A-2026-003 · Müller GmbH</span><span style="color:#10b981;font-weight:600">Angenommen</span></div>
+            <div style="padding:6px 10px;color:#64748b;display:flex;justify-content:space-between"><span>A-2026-002 · Schmidt AG</span><span style="color:#3b82f6;font-weight:600">Gesendet</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Breite Sidebar mit Labels</h3>
+      <p>Dunkle Sidebar mit sichtbaren Menütexten. Sofort erkennbar welcher Bereich aktiv ist. Klassisches SaaS-Layout, sehr professionell.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Top Navigation -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8fafc;padding:12px;border-bottom:1px solid #e2e8f0;">
+      <div style="height:220px;border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.12)">
+        <!-- Top Nav -->
+        <div style="background:#0f172a;height:44px;display:flex;align-items:center;padding:0 16px;gap:16px">
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <div style="width:22px;height:22px;background:#4f46e5;border-radius:5px"></div>
+            <span style="font-size:10px;font-weight:700;color:white">AngebotsTool</span>
+          </div>
+          <div style="display:flex;gap:2px">
+            <div style="background:rgba(255,255,255,0.1);border-radius:5px;padding:4px 10px;font-size:9px;color:white;font-weight:600">Dashboard</div>
+            <div style="padding:4px 10px;font-size:9px;color:#94a3b8">Angebote</div>
+            <div style="padding:4px 10px;font-size:9px;color:#94a3b8">Kunden</div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="background:#4f46e5;border-radius:5px;padding:4px 10px;font-size:9px;color:white;font-weight:600">+ Neues Angebot</div>
+          <div style="width:22px;height:22px;background:#334155;border-radius:50%"></div>
+        </div>
+        <!-- Content -->
+        <div style="background:#f8fafc;padding:14px;height:calc(100% - 44px)">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+            <div style="background:white;border-radius:6px;height:44px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:8px;color:#64748b;font-weight:600">UMSATZ</div>
+              <div style="font-size:12px;color:#1e293b;font-weight:700">24.830 €</div>
+            </div>
+            <div style="background:white;border-radius:6px;height:44px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:8px;color:#64748b;font-weight:600">ANGEBOTE</div>
+              <div style="font-size:12px;color:#1e293b;font-weight:700">12</div>
+            </div>
+            <div style="background:white;border-radius:6px;height:44px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:8px;color:#64748b;font-weight:600">KUNDEN</div>
+              <div style="font-size:12px;color:#1e293b;font-weight:700">5</div>
+            </div>
+            <div style="background:white;border-radius:6px;height:44px;padding:8px;border:1px solid #e2e8f0">
+              <div style="font-size:8px;color:#64748b;font-weight:600">RATE</div>
+              <div style="font-size:12px;color:#10b981;font-weight:700">58%</div>
+            </div>
+          </div>
+          <div style="background:white;border-radius:6px;border:1px solid #e2e8f0;overflow:hidden">
+            <div style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:10px;font-weight:700;color:#1e293b">Letzte Angebote</div>
+            <div style="padding:6px 10px;font-size:9px;color:#64748b;display:flex;justify-content:space-between;border-bottom:1px solid #f8fafc">
+              <span>A-2026-003 · Müller GmbH</span><span style="color:#10b981;font-weight:600">Angenommen</span>
+            </div>
+            <div style="padding:6px 10px;font-size:9px;color:#64748b;display:flex;justify-content:space-between">
+              <span>A-2026-002 · Schmidt AG</span><span style="color:#3b82f6;font-weight:600">Gesendet</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Top-Navigation</h3>
+      <p>Horizontale Leiste oben. Mehr vertikaler Platz für Inhalte. Kompakter, aber weniger Platz für zukünftige Menüpunkte.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">👆 Klick auf eine Option — oder sag mir einfach im Terminal welche dir gefällt.</p>
