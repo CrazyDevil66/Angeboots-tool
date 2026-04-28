@@ -49,10 +49,11 @@ export function saveAngebot(data) {
     datum: data.datum,
     betreff: data.betreff,
     kundeDisplay: data.kunde.firma || data.kunde.name || '—',
-    kundeId: data.kunde.id || null,
+    kundeId: data.kunde?.id || null,
     netto,
     brutto,
     mwstSatz: data.mwstSatz,
+    status: 'entwurf',
     snapshot: data,
   };
 
@@ -75,14 +76,30 @@ export function updateAngebot(id, data) {
           datum: data.datum,
           betreff: data.betreff,
           kundeDisplay: data.kunde.firma || data.kunde.name || '—',
+          kundeId: data.kunde?.id || null,
           netto,
           brutto,
           mwstSatz: data.mwstSatz,
+          status: a.status || 'entwurf',
           snapshot: data,
         }
       : a
   );
   localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+}
+
+export function setAngebotStatus(id, status) {
+  const aktuell = loadAngebote().map(a =>
+    a.id === id ? { ...a, status, updatedAt: new Date().toISOString() } : a
+  );
+  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+}
+
+export function getAngeboteByKunde(kundeId, kundeDisplay) {
+  return loadAngebote().filter(a =>
+    (kundeId && a.kundeId === kundeId) ||
+    (kundeDisplay && a.kundeDisplay === kundeDisplay)
+  );
 }
 
 export function deleteAngebot(id) {
