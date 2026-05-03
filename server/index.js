@@ -92,13 +92,17 @@ app.post('/api/login', async (req, res) => {
     return res.status(429).json({ error: `IP gesperrt. Bitte ${Math.ceil(secs / 60)} Minuten warten.` });
   }
   const { username, password } = req.body;
-  const user = await users.verifyPassword(username, password);
-  if (!user) {
-    auth.recordFailure(ip);
-    return res.status(401).json({ error: 'Benutzername oder Passwort falsch' });
+  try {
+    const user = await users.verifyPassword(username, password);
+    if (!user) {
+      auth.recordFailure(ip);
+      return res.status(401).json({ error: 'Benutzername oder Passwort falsch' });
+    }
+    auth.clearLockout(ip);
+    res.json({ token: makeToken(user) });
+  } catch (e) {
+    res.status(500).json({ error: 'Interner Fehler' });
   }
-  auth.clearLockout(ip);
-  res.json({ token: makeToken(user) });
 });
 
 app.post('/api/logout', (_req, res) => res.json({ ok: true }));
@@ -186,8 +190,12 @@ app.post('/invite/:token', async (req, res) => {
   if (!user) return res.status(400).json({ error: 'Link ungültig oder abgelaufen' });
   const { password } = req.body;
   if (!password) return res.status(400).json({ error: 'Passwort fehlt' });
-  await users.setPassword(user.id, password);
-  res.json({ token: makeToken(users.findById(user.id)) });
+  try {
+    await users.setPassword(user.id, password);
+    res.json({ token: makeToken(users.findById(user.id)) });
+  } catch (e) {
+    res.status(500).json({ error: 'Interner Fehler' });
+  }
 });
 
 // SMTP config
@@ -196,14 +204,24 @@ app.get('/api/config/smtp', requireAuth, requireAdmin, (req, res) => {
   const smtp = config.smtp || {};
   res.json({
     host: smtp.host || '', port: smtp.port || 587,
-    user: smtp.user || '', pass: smtp.pass || '',
+    user: smtp.user || '', pass: smtp.pass ? '***' : '',
     from: smtp.from || '', baseUrl: config.baseUrl || '',
   });
 });
 
 app.post('/api/config/smtp', requireAuth, requireAdmin, (req, res) => {
   const { host, port, user, pass, from, baseUrl } = req.body;
-  writeConfig({ smtp: { host, port: Number(port) || 587, user, pass, from }, baseUrl });
+  const current = readConfig().smtp || {};
+  writeConfig({
+    smtp: {
+      host: host ?? current.host,
+      port: Number(port) || 587,
+      user: user ?? current.user,
+      pass: (pass && pass !== '***') ? pass : current.pass,
+      from: from ?? current.from,
+    },
+    baseUrl: baseUrl ?? readConfig().baseUrl,
+  });
   res.json({ ok: true });
 });
 
