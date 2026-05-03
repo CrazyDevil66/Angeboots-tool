@@ -26,6 +26,10 @@ function createTransport(smtp) {
   });
 }
 
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
 async function sendInvite({ to, username, inviteUrl }) {
   const smtp = getSmtpConfig();
   if (!smtp?.host) return false;
@@ -34,7 +38,7 @@ async function sendInvite({ to, username, inviteUrl }) {
     to,
     subject: 'Einladung: AngebotsTool',
     text: `Hallo ${username},\n\ndu wurdest eingeladen. Setze dein Passwort unter:\n${inviteUrl}\n\nDer Link ist 48 Stunden gültig.`,
-    html: `<p>Hallo <strong>${username}</strong>,</p><p>Setze dein Passwort:</p><p><a href="${inviteUrl}">${inviteUrl}</a></p><p>Gültig für 48 Stunden.</p>`,
+    html: `<p>Hallo <strong>${esc(username)}</strong>,</p><p>Setze dein Passwort:</p><p><a href="${esc(inviteUrl)}">${esc(inviteUrl)}</a></p><p>Gültig für 48 Stunden.</p>`,
   });
   return true;
 }

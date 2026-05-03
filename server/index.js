@@ -43,7 +43,7 @@ function makeToken(user) {
     username: user.username,
     role: user.role,
     mustChangePassword: !!user.mustChangePassword,
-  }, JWT_SECRET);
+  }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 function requireAuth(req, res, next) {
@@ -64,6 +64,7 @@ function requireAdmin(req, res, next) {
 }
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(express.json());
 
 // Setup

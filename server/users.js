@@ -50,6 +50,7 @@ async function createUser({ username, email = null, role = 'user' }) {
 }
 
 async function setPassword(id, password) {
+  if (!password || password.length < 8) throw new Error('Passwort muss mindestens 8 Zeichen haben');
   const all = readUsers();
   const idx = all.findIndex(u => u.id === id);
   if (idx === -1) throw new Error('Benutzer nicht gefunden');

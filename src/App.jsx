@@ -57,6 +57,11 @@ export default function App() {
 
   function handleLogout() {
     clearToken();
+    // App-Daten aus localStorage löschen damit sie beim nächsten Login nicht sichtbar sind
+    localStorage.removeItem('objektrausch_angebote');
+    localStorage.removeItem('objektrausch_kunden');
+    localStorage.removeItem('objektrausch_firma');
+    localStorage.removeItem('objektrausch_katalog');
     setAuth({ loading: false, setupRequired: false, token: null, user: null });
   }
 
