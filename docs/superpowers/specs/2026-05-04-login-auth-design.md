@@ -26,16 +26,18 @@ Das AngebotsTool wird auf einem Unraid-Server betrieben und ist aus dem Internet
 ```
 Browser (React SPA)
   └── GET /* → Express-Backend (statische Dateien aus dist/)
+  └── GET  /api/setup           (öffentlich: {setupRequired: bool})
+  └── POST /api/setup           (öffentlich: ersten Admin anlegen)
   └── POST /api/login
   └── POST /api/logout
   └── GET  /api/me
-  └── POST /api/users          (Admin)
-  └── PATCH /api/users/:id     (Admin)
-  └── DELETE /api/users/:id    (Admin)
+  └── POST /api/users           (Admin)
+  └── PATCH /api/users/:id      (Admin)
+  └── DELETE /api/users/:id     (Admin)
   └── POST /api/users/:id/invite
   └── POST /api/users/:id/reset-password
-  └── GET  /invite/:token      (öffentlich, kein Auth)
-  └── POST /invite/:token      (öffentlich, Passwort setzen)
+  └── GET  /invite/:token       (öffentlich, kein Auth)
+  └── POST /invite/:token       (öffentlich, Passwort setzen)
 ```
 
 ### Persistenz
@@ -124,11 +126,13 @@ JWT wird in `sessionStorage` gespeichert — läuft ab wenn das Browser-Tab gesc
 
 | Variable | Zweck | Standard |
 |---|---|---|
-| `JWT_SECRET` | Signierungsschlüssel für JWT | Pflicht |
+| `JWT_SECRET` | Signierungsschlüssel für JWT | auto-generiert in `/data/config.json` |
+| `BASE_URL` | Öffentliche URL für Einladungslinks | Pflicht wenn SMTP aktiv |
 | `PORT` | Server-Port | `3000` |
 | `DATA_DIR` | Pfad zu `/data` | `/data` |
 
-`JWT_SECRET` wird beim ersten Start automatisch generiert und in `/data/config.json` gespeichert, falls nicht als Env-Var gesetzt.
+`JWT_SECRET` wird beim ersten Start automatisch generiert und in `/data/config.json` gespeichert, falls nicht als Env-Var gesetzt.  
+`BASE_URL` wird in den Einstellungen (E-Mail-Tab) konfigurierbar gemacht — wird für Einladungslinks benötigt.
 
 ---
 
@@ -136,25 +140,27 @@ JWT wird in `sessionStorage` gespeichert — läuft ab wenn das Browser-Tab gesc
 
 ### Neue/geänderte Dateien
 
-| Datei | Änderung |
+| Datei | Status |
 |---|---|
-| `src/lib/auth.js` | API-Calls: login, logout, me, user-CRUD | Neu |
-| `src/components/LoginScreen.jsx` | Login-Formular (dunkles Theme) | Neu |
-| `src/components/SetupScreen.jsx` | Erster-Start-Admin-Anlegen | Neu |
-| `src/components/ChangePasswordModal.jsx` | Erzwungener Passwort-Wechsel | Neu |
-| `src/views/BenutzerVerwaltung.jsx` | Benutzerliste + Formulare | Neu |
-| `src/App.jsx` | Auth-Gate ergänzt | Geändert |
-| `src/views/Einstellungen.jsx` | Tab „Benutzer" + Tab „E-Mail" hinzugefügt | Geändert |
+| `src/lib/auth.js` | Neu — API-Calls: login, logout, me, user-CRUD |
+| `src/components/LoginScreen.jsx` | Neu — Login-Formular (dunkles Theme) |
+| `src/components/SetupScreen.jsx` | Neu — Erster-Start-Admin-Anlegen |
+| `src/components/ChangePasswordModal.jsx` | Neu — Erzwungener Passwort-Wechsel |
+| `src/views/BenutzerVerwaltung.jsx` | Neu — Benutzerliste + Formulare |
+| `src/App.jsx` | Geändert — Auth-Gate ergänzt |
+| `src/views/Einstellungen.jsx` | Geändert — Tab „Benutzer" + Tab „E-Mail" |
 
 ### Auth-Gate in `App.jsx`
 
 ```
 App startet
-  → GET /api/me (JWT aus sessionStorage)
-  → 401: kein Benutzer vorhanden? → SetupScreen
-  → 401: Benutzer vorhanden?      → LoginScreen
-  → 200: mustChangePassword=true? → ChangePasswordModal (blockierend)
-  → 200: alles ok                 → normale App
+  → GET /api/setup
+  → setupRequired=true           → SetupScreen (ersten Admin anlegen)
+  → setupRequired=false
+      → GET /api/me (JWT aus sessionStorage)
+      → 401                      → LoginScreen
+      → 200: mustChangePassword  → ChangePasswordModal (blockierend)
+      → 200: alles ok            → normale App
 ```
 
 ### Einstellungen-Tabs (nach Erweiterung)
