@@ -26,3 +26,17 @@ test('remainingLockoutSeconds > 0 bei gesperrter IP', () => {
   for (let i = 0; i < 5; i++) auth.recordFailure('10.0.0.5');
   assert.ok(auth.remainingLockoutSeconds('10.0.0.5') > 0);
 });
+
+test('Zaehler startet neu nach abgelaufener Sperre', () => {
+  auth._resetAll();
+  // 5 Fehlversuche → gesperrt
+  for (let i = 0; i < 5; i++) auth.recordFailure('10.0.0.6');
+  assert.equal(auth.checkLockout('10.0.0.6'), true);
+  // Sperre manuell ablaufen lassen
+  auth.clearLockout('10.0.0.6');
+  // Direkt nach clearLockout ist nicht mehr gesperrt
+  assert.equal(auth.checkLockout('10.0.0.6'), false);
+  // 4 neue Versuche dürfen nicht sperren
+  for (let i = 0; i < 4; i++) auth.recordFailure('10.0.0.6');
+  assert.equal(auth.checkLockout('10.0.0.6'), false);
+});

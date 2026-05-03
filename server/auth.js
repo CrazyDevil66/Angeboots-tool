@@ -12,7 +12,11 @@ function checkLockout(ip) {
 }
 
 function recordFailure(ip) {
-  const entry = lockouts.get(ip) || { attempts: 0, lockedUntil: null };
+  let entry = lockouts.get(ip) || { attempts: 0, lockedUntil: null };
+  // Abgelaufene Sperre zurücksetzen — neue Versuche beginnen fresh
+  if (entry.lockedUntil && Date.now() >= entry.lockedUntil) {
+    entry = { attempts: 0, lockedUntil: null };
+  }
   entry.attempts += 1;
   if (entry.attempts >= MAX_ATTEMPTS) entry.lockedUntil = Date.now() + LOCKOUT_MS;
   lockouts.set(ip, entry);
@@ -25,7 +29,11 @@ function clearLockout(ip) {
 function remainingLockoutSeconds(ip) {
   const entry = lockouts.get(ip);
   if (!entry?.lockedUntil) return 0;
-  return Math.ceil((entry.lockedUntil - Date.now()) / 1000);
+  return Math.max(0, Math.ceil((entry.lockedUntil - Date.now()) / 1000));
 }
 
-module.exports = { checkLockout, recordFailure, clearLockout, remainingLockoutSeconds };
+function _resetAll() {
+  lockouts.clear();
+}
+
+module.exports = { checkLockout, recordFailure, clearLockout, remainingLockoutSeconds, _resetAll };
