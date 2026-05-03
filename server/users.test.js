@@ -28,6 +28,7 @@ test('setPassword und verifyPassword funktionieren', async () => {
   const result = await users.verifyPassword('bob', 'geheim123');
   assert.ok(result);
   assert.equal(result.username, 'bob');
+  assert.equal(result.passwordHash, undefined);
 });
 
 test('verifyPassword gibt null bei falschem Passwort', async () => {

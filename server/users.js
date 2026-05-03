@@ -64,7 +64,7 @@ async function setInitialPassword(id) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
   const password = Array.from(
     { length: 12 },
-    () => chars[Math.floor(Math.random() * chars.length)]
+    () => chars[crypto.randomInt(0, chars.length)]
   ).join('');
   const all = readUsers();
   const idx = all.findIndex(u => u.id === id);
@@ -107,14 +107,21 @@ function deleteUser(id) {
   writeUsers(all.filter(u => u.id !== id));
 }
 
+function toPublicUser(u) {
+  if (!u) return null;
+  const { passwordHash, inviteToken, inviteExpiry, ...pub } = u;
+  return pub;
+}
+
 async function verifyPassword(username, password) {
   const user = findByUsername(username);
   if (!user || !user.passwordHash) return null;
-  return (await bcrypt.compare(password, user.passwordHash)) ? user : null;
+  return (await bcrypt.compare(password, user.passwordHash)) ? toPublicUser(user) : null;
 }
 
 module.exports = {
   readUsers, findById, findByUsername, findByInviteToken,
   createUser, setPassword, setInitialPassword,
   generateInviteToken, updateUser, deleteUser, verifyPassword,
+  toPublicUser,
 };
