@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { randomBytes } = require('crypto');
 
 const DATA_DIR = process.env.DATA_DIR || '/data';
 const VALID_TYPES = new Set(['firma', 'kunden', 'angebote', 'katalog']);
@@ -21,7 +22,7 @@ function readData(type) {
 function writeData(type, data) {
   if (!VALID_TYPES.has(type)) throw new Error('Ungültiger Datentyp');
   fs.mkdirSync(DATA_DIR, { recursive: true });
-  const tmp = dataFile(type) + '.tmp';
+  const tmp = dataFile(type) + '.' + randomBytes(8).toString('hex') + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
   fs.renameSync(tmp, dataFile(type));
 }
