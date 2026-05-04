@@ -27,4 +27,4 @@ function writeData(type, data) {
   fs.renameSync(tmp, dataFile(type));
 }
 
-module.exports = { readData, writeData, VALID_TYPES };
+module.exports = { readData, writeData, VALID_TYPES, DATA_DIR };
