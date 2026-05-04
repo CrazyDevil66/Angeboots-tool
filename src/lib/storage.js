@@ -6,7 +6,10 @@ async function apiGet(token, endpoint) {
   const res = await fetch(`/api${endpoint}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error(`GET ${endpoint} fehlgeschlagen (${res.status})`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`GET ${endpoint} fehlgeschlagen (${res.status})${text ? ': ' + text : ''}`);
+  }
   return res.json();
 }
 
@@ -16,7 +19,10 @@ async function apiPut(token, endpoint, body) {
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`PUT ${endpoint} fehlgeschlagen (${res.status})`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`PUT ${endpoint} fehlgeschlagen (${res.status})${text ? ': ' + text : ''}`);
+  }
   return res.json();
 }
 
@@ -58,16 +64,21 @@ export async function saveAngebote(token, angebote) {
 
 // ── Angebot-Mutations (lesen + mutieren + schreiben in einem Schritt) ─────────
 
+function calcBetraege(positionen, mwstSatz) {
+  const netto = (positionen ?? []).reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
+  const brutto = netto * (1 + Number(mwstSatz) / 100);
+  return { netto, brutto };
+}
+
 function buildAngebotEintrag(data) {
-  const netto = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
-  const brutto = netto * (1 + Number(data.mwstSatz) / 100);
+  const { netto, brutto } = calcBetraege(data.positionen, data.mwstSatz);
   return {
     id: crypto.randomUUID(),
     savedAt: new Date().toISOString(),
     angebotNr: data.angebotNr,
     datum: data.datum,
     betreff: data.betreff,
-    kundeDisplay: data.kunde.firma || data.kunde.name || '—',
+    kundeDisplay: data.kunde?.firma || data.kunde?.name || '—',
     kundeId: data.kunde?.id || null,
     netto,
     brutto,
@@ -81,6 +92,7 @@ function applyPatch(angebote, id, updates) {
   return angebote.map(a => a.id === id ? { ...a, ...updates } : a);
 }
 
+// last-write-wins: gleichzeitige Schreibzugriffe können sich überschreiben — bewusste Design-Entscheidung (outside of scope)
 async function mutateAngebote(token, fn) {
   const current = await loadAngebote(token);
   const updated = fn(current);
@@ -97,14 +109,13 @@ export async function saveAngebot(token, data) {
 
 // Bestehendes Angebot aktualisieren inkl. Status — gibt updated-Array zurück
 export async function updateAngebot(token, id, data, status) {
-  const netto = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
-  const brutto = netto * (1 + Number(data.mwstSatz) / 100);
+  const { netto, brutto } = calcBetraege(data.positionen, data.mwstSatz);
   return mutateAngebote(token, arr => applyPatch(arr, id, {
     updatedAt: new Date().toISOString(),
     angebotNr: data.angebotNr,
     datum: data.datum,
     betreff: data.betreff,
-    kundeDisplay: data.kunde.firma || data.kunde.name || '—',
+    kundeDisplay: data.kunde?.firma || data.kunde?.name || '—',
     kundeId: data.kunde?.id || null,
     netto,
     brutto,
@@ -149,30 +160,23 @@ export async function setAngebotRechnung(token, id, rechnungsNr, rechnungsDatum,
 
 // ── Pure Helper-Funktionen (kein token, kein API-Call) ────────────────────────
 
-export function nextAngebotNr(angebote) {
-  const year = new Date().getFullYear();
-  const prefix = `A-${year}-`;
+function nextNr(angebote, field, prefix) {
   let max = 0;
   for (const a of angebote) {
-    if (a.angebotNr?.startsWith(prefix)) {
-      const n = parseInt(a.angebotNr.slice(prefix.length), 10);
+    if (a[field]?.startsWith(prefix)) {
+      const n = parseInt(a[field].slice(prefix.length), 10);
       if (!isNaN(n) && n > max) max = n;
     }
   }
   return `${prefix}${String(max + 1).padStart(3, '0')}`;
 }
 
+export function nextAngebotNr(angebote) {
+  return nextNr(angebote, 'angebotNr', `A-${new Date().getFullYear()}-`);
+}
+
 export function nextRechnungsNr(angebote) {
-  const year = new Date().getFullYear();
-  const prefix = `R-${year}-`;
-  let max = 0;
-  for (const a of angebote) {
-    if (a.rechnungsNr?.startsWith(prefix)) {
-      const n = parseInt(a.rechnungsNr.slice(prefix.length), 10);
-      if (!isNaN(n) && n > max) max = n;
-    }
-  }
-  return `${prefix}${String(max + 1).padStart(3, '0')}`;
+  return nextNr(angebote, 'rechnungsNr', `R-${new Date().getFullYear()}-`);
 }
 
 function parseDEDate(str) {
