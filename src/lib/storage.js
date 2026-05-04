@@ -1,49 +1,67 @@
-const FIRMA_KEY    = 'objektrausch_firma';
-const KUNDEN_KEY   = 'objektrausch_kunden';
-const ANGEBOTE_KEY = 'objektrausch_angebote';
-const KATALOG_KEY  = 'objektrausch_katalog';
+// src/lib/storage.js
 
-export function loadFirma() {
-  try {
-    const raw = localStorage.getItem(FIRMA_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+// ── HTTP-Helfer ───────────────────────────────────────────────────────────────
+
+async function apiGet(token, endpoint) {
+  const res = await fetch(`/api${endpoint}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`GET ${endpoint} fehlgeschlagen (${res.status})`);
+  return res.json();
 }
 
-export function saveFirma(firma) {
-  localStorage.setItem(FIRMA_KEY, JSON.stringify(firma));
+async function apiPut(token, endpoint, body) {
+  const res = await fetch(`/api${endpoint}`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`PUT ${endpoint} fehlgeschlagen (${res.status})`);
+  return res.json();
 }
 
-export function loadKunden() {
-  try {
-    const raw = localStorage.getItem(KUNDEN_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+// ── Laden ─────────────────────────────────────────────────────────────────────
+
+export async function loadFirma(token) {
+  return apiGet(token, '/data/firma');
 }
 
-export function saveKunden(kunden) {
-  localStorage.setItem(KUNDEN_KEY, JSON.stringify(kunden));
+export async function loadKunden(token) {
+  return apiGet(token, '/data/kunden');
 }
 
-export function loadAngebote() {
-  try {
-    const raw = localStorage.getItem(ANGEBOTE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+export async function loadAngebote(token) {
+  return apiGet(token, '/data/angebote');
 }
 
-export function saveAngebot(data) {
-  const angebote = loadAngebote();
+export async function loadKatalog(token) {
+  return apiGet(token, '/data/katalog');
+}
+
+// ── Primitiv-Saves ────────────────────────────────────────────────────────────
+
+export async function saveFirma(token, firma) {
+  await apiPut(token, '/data/firma', firma);
+}
+
+export async function saveKunden(token, kunden) {
+  await apiPut(token, '/data/kunden', kunden);
+}
+
+export async function saveKatalog(token, items) {
+  await apiPut(token, '/data/katalog', items);
+}
+
+export async function saveAngebote(token, angebote) {
+  await apiPut(token, '/data/angebote', angebote);
+}
+
+// ── Angebot-Mutations (lesen + mutieren + schreiben in einem Schritt) ─────────
+
+function buildAngebotEintrag(data) {
   const netto = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
   const brutto = netto * (1 + Number(data.mwstSatz) / 100);
-
-  const eintrag = {
+  return {
     id: crypto.randomUUID(),
     savedAt: new Date().toISOString(),
     angebotNr: data.angebotNr,
@@ -57,91 +75,85 @@ export function saveAngebot(data) {
     status: 'entwurf',
     snapshot: data,
   };
-
-  const aktuell = [eintrag, ...angebote];
-  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
-  return eintrag;
 }
 
-export function updateAngebot(id, data) {
-  const angebote = loadAngebote();
+function applyPatch(angebote, id, updates) {
+  return angebote.map(a => a.id === id ? { ...a, ...updates } : a);
+}
+
+async function mutateAngebote(token, fn) {
+  const current = await loadAngebote(token);
+  const updated = fn(current);
+  await saveAngebote(token, updated);
+  return updated;
+}
+
+// Neues Angebot anlegen — gibt { eintrag, updated } zurück
+export async function saveAngebot(token, data) {
+  const eintrag = buildAngebotEintrag(data);
+  const updated = await mutateAngebote(token, arr => [eintrag, ...arr]);
+  return { eintrag, updated };
+}
+
+// Bestehendes Angebot aktualisieren inkl. Status — gibt updated-Array zurück
+export async function updateAngebot(token, id, data, status) {
   const netto = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
   const brutto = netto * (1 + Number(data.mwstSatz) / 100);
-
-  const aktuell = angebote.map(a =>
-    a.id === id
-      ? {
-          ...a,
-          updatedAt: new Date().toISOString(),
-          angebotNr: data.angebotNr,
-          datum: data.datum,
-          betreff: data.betreff,
-          kundeDisplay: data.kunde.firma || data.kunde.name || '—',
-          kundeId: data.kunde?.id || null,
-          netto,
-          brutto,
-          mwstSatz: data.mwstSatz,
-          status: a.status || 'entwurf',
-          snapshot: data,
-        }
-      : a
-  );
-  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+  return mutateAngebote(token, arr => applyPatch(arr, id, {
+    updatedAt: new Date().toISOString(),
+    angebotNr: data.angebotNr,
+    datum: data.datum,
+    betreff: data.betreff,
+    kundeDisplay: data.kunde.firma || data.kunde.name || '—',
+    kundeId: data.kunde?.id || null,
+    netto,
+    brutto,
+    mwstSatz: data.mwstSatz,
+    status,
+    snapshot: data,
+  }));
 }
 
-export function setAngebotStatus(id, status) {
-  const aktuell = loadAngebote().map(a =>
-    a.id === id ? { ...a, status, updatedAt: new Date().toISOString() } : a
-  );
-  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
-}
-
-export function getAngeboteByKunde(kundeId, kundeDisplay) {
-  return loadAngebote().filter(a =>
-    (kundeId && a.kundeId === kundeId) ||
-    (kundeDisplay && a.kundeDisplay === kundeDisplay)
+export async function setAngebotStatus(token, id, status) {
+  return mutateAngebote(token, arr =>
+    applyPatch(arr, id, { status, updatedAt: new Date().toISOString() })
   );
 }
 
-export function deleteAngebot(id) {
-  const aktuell = loadAngebote().filter(a => a.id !== id);
-  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+export async function deleteAngebot(token, id) {
+  return mutateAngebote(token, arr => arr.filter(a => a.id !== id));
 }
 
-export function setMahnung(id, mahnStufe, mahnungNr, mahndatum, mahnGebuehren) {
-  const aktuell = loadAngebote().map(a =>
-    a.id === id
-      ? { ...a, mahnStufe, mahnungNr, mahndatum, mahnGebuehren, status: 'gemahnt', updatedAt: new Date().toISOString() }
-      : a
-  );
-  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+export async function setMahnung(token, id, mahnStufe, mahnungNr, mahndatum, mahnGebuehren) {
+  return mutateAngebote(token, arr => applyPatch(arr, id, {
+    mahnStufe, mahnungNr, mahndatum, mahnGebuehren,
+    status: 'gemahnt',
+    updatedAt: new Date().toISOString(),
+  }));
 }
 
-export function setBezahlt(id) {
-  const aktuell = loadAngebote().map(a =>
-    a.id === id
-      ? { ...a, status: 'bezahlt', bezahltAm: new Date().toISOString(), updatedAt: new Date().toISOString() }
-      : a
-  );
-  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+export async function setBezahlt(token, id) {
+  return mutateAngebote(token, arr => applyPatch(arr, id, {
+    status: 'bezahlt',
+    bezahltAm: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }));
 }
 
-export function loadKatalog() {
-  try {
-    const raw = localStorage.getItem(KATALOG_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+export async function setAngebotRechnung(token, id, rechnungsNr, rechnungsDatum, rechnungsBetreff, rechnungsEinleitung, rechnungsHinweise) {
+  return mutateAngebote(token, arr => applyPatch(arr, id, {
+    rechnungsNr, rechnungsDatum, rechnungsBetreff, rechnungsEinleitung, rechnungsHinweise,
+    updatedAt: new Date().toISOString(),
+  }));
 }
 
-export function saveKatalog(items) {
-  localStorage.setItem(KATALOG_KEY, JSON.stringify(items));
-}
+// ── Pure Helper-Funktionen (kein token, kein API-Call) ────────────────────────
 
-export function nextAngebotNr() {
-  const year   = new Date().getFullYear();
+export function nextAngebotNr(angebote) {
+  const year = new Date().getFullYear();
   const prefix = `A-${year}-`;
   let max = 0;
-  for (const a of loadAngebote()) {
+  for (const a of angebote) {
     if (a.angebotNr?.startsWith(prefix)) {
       const n = parseInt(a.angebotNr.slice(prefix.length), 10);
       if (!isNaN(n) && n > max) max = n;
@@ -150,11 +162,11 @@ export function nextAngebotNr() {
   return `${prefix}${String(max + 1).padStart(3, '0')}`;
 }
 
-export function nextRechnungsNr() {
-  const year   = new Date().getFullYear();
+export function nextRechnungsNr(angebote) {
+  const year = new Date().getFullYear();
   const prefix = `R-${year}-`;
   let max = 0;
-  for (const a of loadAngebote()) {
+  for (const a of angebote) {
     if (a.rechnungsNr?.startsWith(prefix)) {
       const n = parseInt(a.rechnungsNr.slice(prefix.length), 10);
       if (!isNaN(n) && n > max) max = n;
@@ -170,12 +182,12 @@ function parseDEDate(str) {
   return new Date(Number(y), Number(m) - 1, Number(d));
 }
 
-export function autoMarkAbgelaufen() {
+// Gibt { updated: Angebot[], changed: boolean } zurück
+export function autoMarkAbgelaufen(angebote) {
   const heute = new Date();
   heute.setHours(0, 0, 0, 0);
-  const angebote = loadAngebote();
   let changed = false;
-  const aktuell = angebote.map(a => {
+  const updated = angebote.map(a => {
     if (a.status !== 'entwurf' && a.status !== 'gesendet') return a;
     const datum = parseDEDate(a.snapshot?.gueltigBis);
     if (!datum) return a;
@@ -186,14 +198,12 @@ export function autoMarkAbgelaufen() {
     }
     return a;
   });
-  if (changed) localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+  return { updated, changed };
 }
 
-export function setAngebotRechnung(id, rechnungsNr, rechnungsDatum, rechnungsBetreff, rechnungsEinleitung, rechnungsHinweise) {
-  const aktuell = loadAngebote().map(a =>
-    a.id === id
-      ? { ...a, rechnungsNr, rechnungsDatum, rechnungsBetreff, rechnungsEinleitung, rechnungsHinweise, updatedAt: new Date().toISOString() }
-      : a
+export function getAngeboteByKunde(angebote, kundeId, kundeDisplay) {
+  return angebote.filter(a =>
+    (kundeId && a.kundeId === kundeId) ||
+    (kundeDisplay && a.kundeDisplay === kundeDisplay)
   );
-  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
 }
