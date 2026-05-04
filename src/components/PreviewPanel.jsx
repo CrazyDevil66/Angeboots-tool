@@ -4,98 +4,183 @@ function fmt(num) {
   return Number(num || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const C = {
+  dark:      '#2D3342',
+  yellow:    '#E8B800',
+  textDark:  '#1E2130',
+  textMid:   '#4A5568',
+  textLight: '#8896A8',
+  bgLight:   '#F8FAFC',
+  border:    '#E2E8F0',
+};
+
 export default function PreviewPanel({ data }) {
-  const netto = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
-  const mwst = netto * (Number(data.mwstSatz) / 100);
+  const netto  = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
+  const mwst   = netto * (Number(data.mwstSatz) / 100);
   const brutto = netto + mwst;
+  const f      = data.firma;
+
+  const absender = [f.name, f.strasse, [f.plz, f.ort].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden sticky top-6">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50">
-        <FileText size={18} className="text-indigo-500" />
+    <div
+      className="rounded-2xl shadow-sm border border-slate-100 overflow-hidden sticky"
+      style={{ top: '80px', backgroundColor: '#fff' }}
+    >
+      {/* Panel-Titel */}
+      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-slate-100 bg-slate-50">
+        <FileText size={16} className="text-indigo-500" />
         <h3 className="font-semibold text-slate-700 text-sm">Vorschau</h3>
       </div>
 
-      {/* A4-Simulation */}
-      <div className="p-4 bg-slate-100">
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden text-xs" style={{ aspectRatio: '210/297' }}>
-          <div className="p-6 h-full flex flex-col">
-            {/* Header */}
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <div className="text-indigo-600 font-bold text-base leading-tight">
-                  {data.firma.name || 'Firmenname'}
+      {/* Dokument-Vorschau — scrollbar, screen-taugliche Schriftgrößen */}
+      <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 260px)' }}>
+
+        {/* Header */}
+        <div style={{ backgroundColor: C.dark, padding: '14px 28px', minHeight: 58, display: 'flex', alignItems: 'center' }}>
+          {f.logo
+            ? <img src={f.logo} alt="Logo" style={{ maxHeight: 34, maxWidth: 140, objectFit: 'contain' }} />
+            : <span style={{ color: C.yellow, fontWeight: 700, fontSize: 14, letterSpacing: 1 }}>{f.name || 'Firmenname'}</span>
+          }
+        </div>
+        <div style={{ height: 3, backgroundColor: C.yellow }} />
+
+        {/* Body */}
+        <div style={{ padding: '28px 28px 20px', backgroundColor: '#fff' }}>
+
+          {/* Zweispaltig: Adresse | Dok-Info */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 20 }}>
+
+            {/* Adressfenster */}
+            <div style={{ flex: '0 0 auto', maxWidth: '55%' }}>
+              <div style={{ fontSize: 10, color: C.textLight, borderBottom: `0.5px solid ${C.border}`, paddingBottom: 3, marginBottom: 6 }}>
+                {absender || ' '}
+              </div>
+              {data.kunde.firma && (
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.textDark, marginBottom: 2 }}>{data.kunde.firma}</div>
+              )}
+              {data.kunde.name && (
+                <div style={{ fontSize: data.kunde.firma ? 11 : 13, fontWeight: data.kunde.firma ? 400 : 700, color: data.kunde.firma ? C.textMid : C.textDark, marginBottom: 2 }}>
+                  {data.kunde.name}
                 </div>
-                <div className="text-slate-400 text-[9px] mt-0.5">{data.firma.strasse}</div>
-                <div className="text-slate-400 text-[9px]">{data.firma.plz} {data.firma.ort}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-slate-800 font-bold text-lg leading-none">ANGEBOT</div>
-                <div className="text-slate-400 text-[9px] mt-1">Nr. {data.angebotNr}</div>
-                <div className="text-slate-400 text-[9px]">{data.datum}</div>
-              </div>
+              )}
+              {!data.kunde.firma && !data.kunde.name && (
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#CBD5E1' }}>Kundenname</div>
+              )}
+              {data.kunde.strasse && <div style={{ fontSize: 11, color: C.textMid, marginBottom: 1 }}>{data.kunde.strasse}</div>}
+              {data.kunde.ort     && <div style={{ fontSize: 11, color: C.textMid }}>{data.kunde.plz} {data.kunde.ort}</div>}
             </div>
 
-            <div className="h-0.5 bg-indigo-500 rounded mb-3" />
-
-            {/* Empfänger */}
-            <div className="mb-3">
-              <div className="text-slate-300 text-[8px] uppercase tracking-wide mb-1">Angebot für</div>
-              <div className="font-semibold text-slate-700 text-[10px]">
-                {data.kunde.firma || data.kunde.name || 'Kundenname'}
+            {/* Dokumenttitel + Metadaten */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.dark, letterSpacing: 2, marginBottom: 6 }}>ANGEBOT</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <span style={{ fontSize: 11, color: C.textLight, minWidth: 60, textAlign: 'right' }}>Nummer</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: C.textDark }}>{data.angebotNr || '—'}</span>
               </div>
-              <div className="text-slate-400 text-[9px]">{data.kunde.strasse}</div>
-              <div className="text-slate-400 text-[9px]">{data.kunde.plz} {data.kunde.ort}</div>
-            </div>
-
-            {/* Betreff */}
-            {data.betreff && (
-              <div className="font-semibold text-slate-800 text-[10px] mb-1">{data.betreff}</div>
-            )}
-            {data.einleitung && (
-              <div className="text-slate-500 text-[8px] mb-3 leading-relaxed">{data.einleitung}</div>
-            )}
-
-            {/* Tabelle */}
-            <div className="flex-1 overflow-hidden">
-              <div className="bg-slate-50 rounded flex text-[8px] font-semibold text-slate-400 px-1.5 py-1 mb-1">
-                <span className="flex-1">Beschreibung</span>
-                <span className="w-8 text-center">Menge</span>
-                <span className="w-14 text-right">Gesamt</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <span style={{ fontSize: 11, color: C.textLight, minWidth: 60, textAlign: 'right' }}>Datum</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: C.textDark }}>{data.datum}</span>
               </div>
-              {data.positionen.slice(0, 6).map((p, i) => (
-                <div key={i} className="flex text-[8px] px-1.5 py-0.5 border-b border-slate-50">
-                  <span className="flex-1 text-slate-600 truncate">{p.bezeichnung || '—'}</span>
-                  <span className="w-8 text-center text-slate-400">{p.menge}</span>
-                  <span className="w-14 text-right text-slate-600">
-                    {fmt(Number(p.menge) * Number(p.einzelpreis))} €
-                  </span>
+              {f.email && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                  <span style={{ fontSize: 11, color: C.textLight, minWidth: 60, textAlign: 'right' }}>E-Mail</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.textDark }}>{f.email}</span>
                 </div>
-              ))}
-              {data.positionen.length > 6 && (
-                <div className="text-[7px] text-slate-300 text-center py-1">
-                  + {data.positionen.length - 6} weitere Positionen
+              )}
+              {f.telefon && (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: C.textLight, minWidth: 60, textAlign: 'right' }}>Telefon</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: C.textDark }}>{f.telefon}</span>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Summen */}
-            <div className="mt-auto pt-2 border-t border-slate-100">
-              <div className="flex justify-end">
-                <div className="w-36">
-                  <div className="flex justify-between text-[8px] text-slate-400 mb-0.5">
-                    <span>Netto</span><span>{fmt(netto)} €</span>
-                  </div>
-                  <div className="flex justify-between text-[8px] text-slate-400 mb-1">
-                    <span>MwSt. {data.mwstSatz}%</span><span>{fmt(mwst)} €</span>
-                  </div>
-                  <div className="flex justify-between text-[9px] font-bold bg-indigo-500 text-white rounded px-1.5 py-1">
-                    <span>Gesamt</span><span>{fmt(brutto)} €</span>
-                  </div>
-                </div>
+          {/* Betreff */}
+          {data.betreff && (
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.textDark, borderLeft: `3px solid ${C.yellow}`, paddingLeft: 10, marginBottom: 8 }}>
+              {data.betreff}
+            </div>
+          )}
+
+          {/* Einleitung */}
+          {data.einleitung && (
+            <div style={{ fontSize: 11, color: C.textMid, lineHeight: 1.6, marginBottom: 18, whiteSpace: 'pre-wrap' }}>
+              {data.einleitung}
+            </div>
+          )}
+
+          {/* Tabelle */}
+          <div style={{ display: 'flex', backgroundColor: C.dark, padding: '7px 0', borderRadius: 3, marginBottom: 1 }}>
+            <span style={{ width: '5%',  paddingLeft: 10, fontSize: 10, fontWeight: 700, color: '#fff' }}>#</span>
+            <span style={{ width: '43%', paddingLeft: 6,  fontSize: 10, fontWeight: 700, color: '#fff' }}>Beschreibung</span>
+            <span style={{ width: '10%', textAlign: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>Menge</span>
+            <span style={{ width: '10%', textAlign: 'center', fontSize: 10, fontWeight: 700, color: '#fff' }}>Einheit</span>
+            <span style={{ width: '16%', textAlign: 'right',  fontSize: 10, fontWeight: 700, color: '#fff' }}>Einzelpreis</span>
+            <span style={{ width: '16%', textAlign: 'right', paddingRight: 10, fontSize: 10, fontWeight: 700, color: '#fff' }}>Gesamt</span>
+          </div>
+
+          {data.positionen.slice(0, 8).map((p, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', borderBottom: `1px solid ${C.border}`, padding: '6px 0', backgroundColor: i % 2 !== 0 ? C.bgLight : '#fff' }}>
+              <span style={{ width: '5%',  paddingLeft: 10, fontSize: 10, color: C.yellow, fontWeight: 700, paddingTop: 1 }}>{i + 1}</span>
+              <div style={{ width: '43%', paddingLeft: 6 }}>
+                <div style={{ fontSize: 11, color: C.textDark }}>{p.bezeichnung || '—'}</div>
+                {p.beschreibung && <div style={{ fontSize: 10, color: C.textLight, marginTop: 1 }}>{p.beschreibung}</div>}
               </div>
+              <span style={{ width: '10%', textAlign: 'center', fontSize: 11, color: C.textDark }}>{p.menge}</span>
+              <span style={{ width: '10%', textAlign: 'center', fontSize: 11, color: C.textDark }}>{p.einheit || 'Stk.'}</span>
+              <span style={{ width: '16%', textAlign: 'right',  fontSize: 11, color: C.textDark }}>{fmt(p.einzelpreis)} €</span>
+              <span style={{ width: '16%', textAlign: 'right', paddingRight: 10, fontSize: 11, fontWeight: 700, color: C.textDark }}>
+                {fmt(Number(p.menge) * Number(p.einzelpreis))} €
+              </span>
+            </div>
+          ))}
+          {data.positionen.length > 8 && (
+            <div style={{ fontSize: 10, color: C.textLight, textAlign: 'center', padding: '5px 0' }}>
+              + {data.positionen.length - 8} weitere Positionen
+            </div>
+          )}
+
+          {/* Summen */}
+          <div style={{ marginTop: 12, marginLeft: 'auto', width: '40%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 10px', borderBottom: `1px solid ${C.border}` }}>
+              <span style={{ fontSize: 11, color: C.textMid }}>Nettobetrag</span>
+              <span style={{ fontSize: 11, color: C.textDark }}>{fmt(netto)} €</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 10px', borderBottom: `1px solid ${C.border}` }}>
+              <span style={{ fontSize: 11, color: C.textMid }}>MwSt. {data.mwstSatz} %</span>
+              <span style={{ fontSize: 11, color: C.textDark }}>{fmt(mwst)} €</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', backgroundColor: C.yellow, padding: '7px 10px', borderRadius: 3, marginTop: 2 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.dark }}>Gesamtbetrag</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: C.dark }}>{fmt(brutto)} €</span>
             </div>
           </div>
+
+          {/* Hinweise */}
+          {data.hinweise && (
+            <div style={{ marginTop: 20, padding: 12, backgroundColor: C.bgLight, borderLeft: `3px solid ${C.dark}`, borderRadius: 2 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: C.dark, marginBottom: 4, letterSpacing: 0.5 }}>HINWEISE</div>
+              <div style={{ fontSize: 11, color: C.textMid, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{data.hinweise}</div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ backgroundColor: C.dark, padding: '10px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 10, color: '#6B7A94' }}>
+              {[f.name, f.strasse, [f.plz, f.ort].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
+              {f.ustId ? ` · USt-ID: ${f.ustId}` : ''}
+            </div>
+            {f.iban && (
+              <div style={{ fontSize: 10, color: C.textLight, marginTop: 2 }}>
+                {[f.kontoinhaber && `Inh.: ${f.kontoinhaber}`, `IBAN: ${f.iban}`, f.bic && `BIC: ${f.bic}`, f.bank].filter(Boolean).join(' · ')}
+              </div>
+            )}
+          </div>
+          <span style={{ fontSize: 10, color: C.yellow }}>1 / 1</span>
         </div>
       </div>
 

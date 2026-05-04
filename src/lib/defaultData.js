@@ -9,8 +9,19 @@ export const defaultData = {
     web: '',
     ustId: '',
     steuernr: '',
+    logo: null,
+    einleitungAngebot: 'vielen Dank für Ihr Interesse. Gerne unterbreiten wir Ihnen folgendes Angebot:',
+    einleitungRechnung: 'vielen Dank für Ihren Auftrag. Wir erlauben uns, folgende Leistungen in Rechnung zu stellen:',
+    hinweiseAngebot: 'Zahlungsziel: 14 Tage nach Rechnungseingang ohne Abzug.\nAngebot freibleibend.',
+    hinweiseRechnung: 'Zahlungsziel: 14 Tage nach Rechnungseingang ohne Abzug.\nBitte überweisen Sie den fälligen Betrag auf unser Konto.',
+    kontoinhaber: '',
+    iban: '',
+    bic: '',
+    bank: '',
+    mahngebuehr: '5.00',
   },
   kunde: {
+    anrede: '',
     firma: '',
     name: '',
     strasse: '',
@@ -22,13 +33,13 @@ export const defaultData = {
   angebotNr: `A-${new Date().getFullYear()}-001`,
   datum: new Date().toLocaleDateString('de-DE'),
   gueltigBis: '',
-  betreff: '',
+  betreff: 'Angebot',
   einleitung: 'vielen Dank für Ihr Interesse. Gerne unterbreiten wir Ihnen folgendes Angebot:',
   mwstSatz: 19,
   positionen: [
     { bezeichnung: '', beschreibung: '', menge: 1, einheit: 'Stk.', einzelpreis: 0 },
   ],
-  hinweise: 'Zahlungsziel: 14 Tage nach Rechnungseingang ohne Abzug.\nAngebot freibleibend.',
+  hinweise: '',
 };
 
 export const einheiten = ['Stk.', 'Std.', 'm²', 'lfm', 'kg', 'Pauschal', 'Set', 'Monat'];

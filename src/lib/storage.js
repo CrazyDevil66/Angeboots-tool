@@ -1,6 +1,7 @@
-const FIRMA_KEY = 'objektrausch_firma';
-const KUNDEN_KEY = 'objektrausch_kunden';
+const FIRMA_KEY    = 'objektrausch_firma';
+const KUNDEN_KEY   = 'objektrausch_kunden';
 const ANGEBOTE_KEY = 'objektrausch_angebote';
+const KATALOG_KEY  = 'objektrausch_katalog';
 
 export function loadFirma() {
   try {
@@ -104,5 +105,95 @@ export function getAngeboteByKunde(kundeId, kundeDisplay) {
 
 export function deleteAngebot(id) {
   const aktuell = loadAngebote().filter(a => a.id !== id);
+  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+}
+
+export function setMahnung(id, mahnStufe, mahnungNr, mahndatum, mahnGebuehren) {
+  const aktuell = loadAngebote().map(a =>
+    a.id === id
+      ? { ...a, mahnStufe, mahnungNr, mahndatum, mahnGebuehren, status: 'gemahnt', updatedAt: new Date().toISOString() }
+      : a
+  );
+  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+}
+
+export function setBezahlt(id) {
+  const aktuell = loadAngebote().map(a =>
+    a.id === id
+      ? { ...a, status: 'bezahlt', bezahltAm: new Date().toISOString(), updatedAt: new Date().toISOString() }
+      : a
+  );
+  localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+}
+
+export function loadKatalog() {
+  try {
+    const raw = localStorage.getItem(KATALOG_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+export function saveKatalog(items) {
+  localStorage.setItem(KATALOG_KEY, JSON.stringify(items));
+}
+
+export function nextAngebotNr() {
+  const year   = new Date().getFullYear();
+  const prefix = `A-${year}-`;
+  let max = 0;
+  for (const a of loadAngebote()) {
+    if (a.angebotNr?.startsWith(prefix)) {
+      const n = parseInt(a.angebotNr.slice(prefix.length), 10);
+      if (!isNaN(n) && n > max) max = n;
+    }
+  }
+  return `${prefix}${String(max + 1).padStart(3, '0')}`;
+}
+
+export function nextRechnungsNr() {
+  const year   = new Date().getFullYear();
+  const prefix = `R-${year}-`;
+  let max = 0;
+  for (const a of loadAngebote()) {
+    if (a.rechnungsNr?.startsWith(prefix)) {
+      const n = parseInt(a.rechnungsNr.slice(prefix.length), 10);
+      if (!isNaN(n) && n > max) max = n;
+    }
+  }
+  return `${prefix}${String(max + 1).padStart(3, '0')}`;
+}
+
+function parseDEDate(str) {
+  if (!str) return null;
+  const [d, m, y] = str.split('.');
+  if (!d || !m || !y) return null;
+  return new Date(Number(y), Number(m) - 1, Number(d));
+}
+
+export function autoMarkAbgelaufen() {
+  const heute = new Date();
+  heute.setHours(0, 0, 0, 0);
+  const angebote = loadAngebote();
+  let changed = false;
+  const aktuell = angebote.map(a => {
+    if (a.status !== 'entwurf' && a.status !== 'gesendet') return a;
+    const datum = parseDEDate(a.snapshot?.gueltigBis);
+    if (!datum) return a;
+    datum.setHours(0, 0, 0, 0);
+    if (datum < heute) {
+      changed = true;
+      return { ...a, status: 'abgelaufen', updatedAt: new Date().toISOString() };
+    }
+    return a;
+  });
+  if (changed) localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
+}
+
+export function setAngebotRechnung(id, rechnungsNr, rechnungsDatum, rechnungsBetreff, rechnungsEinleitung, rechnungsHinweise) {
+  const aktuell = loadAngebote().map(a =>
+    a.id === id
+      ? { ...a, rechnungsNr, rechnungsDatum, rechnungsBetreff, rechnungsEinleitung, rechnungsHinweise, updatedAt: new Date().toISOString() }
+      : a
+  );
   localStorage.setItem(ANGEBOTE_KEY, JSON.stringify(aktuell));
 }

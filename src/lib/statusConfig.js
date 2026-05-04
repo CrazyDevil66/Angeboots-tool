@@ -24,6 +24,16 @@ export const STATUS_CONFIG = {
     bg: 'bg-orange-50', text: 'text-orange-700',
     dot: 'bg-orange-400', border: 'border-orange-200',
   },
+  gemahnt: {
+    label: 'Gemahnt',
+    bg: 'bg-red-50', text: 'text-red-700',
+    dot: 'bg-red-500', border: 'border-red-300',
+  },
+  bezahlt: {
+    label: 'Bezahlt',
+    bg: 'bg-teal-50', text: 'text-teal-700',
+    dot: 'bg-teal-500', border: 'border-teal-200',
+  },
 };
 
 export const STATUS_LIST = Object.entries(STATUS_CONFIG).map(([value, cfg]) => ({ value, ...cfg }));

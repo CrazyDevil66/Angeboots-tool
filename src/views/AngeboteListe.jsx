@@ -15,11 +15,6 @@ function fmt(num) {
   return Number(num || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('de-DE');
-}
-
 export default function AngeboteListe({ navigate, onRefresh }) {
   const [angebote, setAngebote] = useState(loadAngebote);
   const [suche, setSuche] = useState('');
@@ -67,8 +62,20 @@ export default function AngeboteListe({ navigate, onRefresh }) {
 
   async function handlePDF(a) {
     setPdfLoading(a.id);
-    try { await generatePDF(a.snapshot); }
-    catch (e) { console.error(e); }
+    try {
+      if (a.rechnungsNr) {
+        await generatePDF({
+          ...a.snapshot,
+          rechnungsNr:  a.rechnungsNr,
+          rechnungsDatum: a.rechnungsDatum,
+          betreff:    a.rechnungsBetreff    ?? a.snapshot?.betreff,
+          einleitung: a.rechnungsEinleitung ?? a.snapshot?.einleitung,
+          hinweise:   a.rechnungsHinweise   ?? a.snapshot?.hinweise,
+        }, 'rechnung');
+      } else {
+        await generatePDF(a.snapshot);
+      }
+    } catch (e) { console.error(e); }
     finally { setPdfLoading(null); }
   }
 
@@ -156,16 +163,19 @@ export default function AngeboteListe({ navigate, onRefresh }) {
                   <td className="px-4 py-3.5">
                     <button
                       onClick={() => navigate('angebot-editor', { angebotId: a.id })}
-                      className="text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+                      className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 leading-tight"
                     >
                       {a.angebotNr}
                     </button>
+                    {a.rechnungsNr && (
+                      <div className="text-xs text-emerald-600 font-medium mt-0.5">{a.rechnungsNr}</div>
+                    )}
                   </td>
                   <td className="px-4 py-3.5 text-sm text-slate-700">{a.kundeDisplay || '—'}</td>
                   <td className="px-4 py-3.5 text-sm text-slate-500 max-w-[180px] truncate">
                     {a.betreff || <span className="italic text-slate-300">Kein Betreff</span>}
                   </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{formatDate(a.savedAt)}</td>
+                  <td className="px-4 py-3.5 text-sm text-slate-500">{a.datum || '—'}</td>
                   <td className="px-4 py-3.5 text-sm font-semibold text-slate-800 text-right">{fmt(a.brutto)} €</td>
                   <td className="px-4 py-3.5">
                     <StatusDropdown
@@ -186,7 +196,7 @@ export default function AngeboteListe({ navigate, onRefresh }) {
                         onClick={() => handlePDF(a)}
                         disabled={pdfLoading === a.id}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-40"
-                        title="PDF exportieren"
+                        title={a.rechnungsNr ? 'Rechnung PDF' : 'Angebot PDF'}
                       >
                         <Download size={14} />
                       </button>

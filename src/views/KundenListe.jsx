@@ -7,7 +7,7 @@ import StatusBadge from '../components/StatusBadge';
 import FormField, { Input } from '../components/FormField';
 import { loadKunden, saveKunden, loadAngebote } from '../lib/storage';
 
-const leerKunde = { id: null, firma: '', name: '', strasse: '', plz: '', ort: '', email: '', telefon: '' };
+const leerKunde = { id: null, anrede: '', firma: '', name: '', strasse: '', plz: '', ort: '', email: '', telefon: '' };
 
 function fmt(num) {
   return Number(num || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -23,6 +23,24 @@ function KundeForm({ initial, onSave, onCancel }) {
       <div className="grid grid-cols-2 gap-3">
         <FormField label="Firma">
           <Input value={k.firma} onChange={e => set('firma', e.target.value)} placeholder="Kunden GmbH" autoFocus />
+        </FormField>
+        <FormField label="Anrede">
+          <div className="flex gap-1 flex-wrap">
+            {['', 'Herr', 'Frau', 'Divers'].map(a => (
+              <button
+                key={a}
+                type="button"
+                onClick={() => set('anrede', a)}
+                className={`px-3 py-2 text-sm rounded-lg border transition-all ${
+                  k.anrede === a
+                    ? 'bg-indigo-600 text-white border-indigo-600 font-semibold'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300'
+                }`}
+              >
+                {a || '—'}
+              </button>
+            ))}
+          </div>
         </FormField>
         <FormField label="Ansprechpartner">
           <Input value={k.name} onChange={e => set('name', e.target.value)} placeholder="Max Mustermann" />
@@ -305,7 +323,7 @@ export default function KundenListe({ navigate, onRefresh }) {
                   {drawerMode === 'new' ? 'Neuer Kunde' : 'Kunde bearbeiten'}
                 </h3>
                 <button
-                  onClick={() => { setDrawerMode(selected ? 'view' : 'view'); if (!selected) setDrawerMode('view'); setSelected(selected); }}
+                  onClick={() => { if (drawerMode === 'new') setSelected(null); setDrawerMode('view'); }}
                   className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   <X size={16} />
