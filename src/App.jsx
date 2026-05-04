@@ -35,21 +35,25 @@ export default function App() {
 
   // ── Alle 4 Datentypen nach Login laden ──
   async function loadAllData(token) {
-    const [f, k, a, kat] = await Promise.all([
-      loadFirma(token),
-      loadKunden(token),
-      loadAngebote(token),
-      loadKatalog(token),
-    ]);
-    setFirma(f);
-    setKunden(k);
-    setKatalog(kat);
-    const { updated, changed } = autoMarkAbgelaufen(a);
-    if (changed) {
-      await saveAngebote(token, updated);
-      setAngebote(updated);
-    } else {
-      setAngebote(a);
+    try {
+      const [f, k, a, kat] = await Promise.all([
+        loadFirma(token),
+        loadKunden(token),
+        loadAngebote(token),
+        loadKatalog(token),
+      ]);
+      setFirma(f);
+      setKunden(k);
+      setKatalog(kat);
+      const { updated, changed } = autoMarkAbgelaufen(a);
+      if (changed) {
+        await saveAngebote(token, updated);
+        setAngebote(updated);
+      } else {
+        setAngebote(a);
+      }
+    } catch (e) {
+      console.error('Datenladen fehlgeschlagen:', e);
     }
   }
 
@@ -64,7 +68,7 @@ export default function App() {
       if (dataType === 'angebote') setAngebote(await loadAngebote(token));
       if (dataType === 'katalog')  setKatalog(await loadKatalog(token));
     };
-    es.onerror = () => {};
+    es.onerror = (e) => { console.error('SSE-Verbindungsfehler:', e); };
     eventSourceRef.current = es;
   }
 
