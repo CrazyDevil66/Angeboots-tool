@@ -4,7 +4,6 @@ import {
   Users, Plus, ArrowRight, Banknote, Clock, Receipt,
 } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
-import { loadAngebote, loadKunden } from '../lib/storage';
 
 function fmt(num) {
   return Number(num || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -104,9 +103,7 @@ function AktionZeile({ icon: Icon, prio, titel, info, onClick }) {
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
-export default function Dashboard({ navigate }) {
-  const angebote = useMemo(() => loadAngebote(), []);
-  const kunden   = useMemo(() => loadKunden(),   []);
+export default function Dashboard({ navigate, angebote, kunden }) {
 
   // ── KPI-Werte ──
   const stats = useMemo(() => {
