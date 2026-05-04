@@ -40,10 +40,9 @@ const JWT_SECRET = getJwtSecret();
 
 const sseClients = new Set();
 
-function broadcastDataUpdate(dataType, excludeRes) {
+function broadcastDataUpdate(dataType) {
   const msg = `data: ${JSON.stringify({ dataType })}\n\n`;
   for (const client of sseClients) {
-    if (client === excludeRes) continue;
     try { client.write(msg); } catch { sseClients.delete(client); }
   }
 }
@@ -260,9 +259,13 @@ app.get('/api/events', (req, res) => {
     'Connection': 'keep-alive',
     'X-Accel-Buffering': 'no',
   });
+  res.write('retry: 5000\n\n');
   res.write(':\n\n');
   sseClients.add(res);
-  req.on('close', () => sseClients.delete(res));
+  const heartbeat = setInterval(() => {
+    try { res.write(':\n\n'); } catch { clearInterval(heartbeat); sseClients.delete(res); }
+  }, 25000);
+  req.on('close', () => { clearInterval(heartbeat); sseClients.delete(res); });
 });
 
 app.get('/api/data/:type', requireAuth, (req, res) => {
@@ -278,9 +281,15 @@ app.get('/api/data/:type', requireAuth, (req, res) => {
 app.put('/api/data/:type', requireAuth, (req, res) => {
   const { type } = req.params;
   if (!dataStore.VALID_TYPES.has(type)) return res.status(400).json({ error: 'Ungültiger Typ' });
+  const body = req.body;
+  if (type === 'firma') {
+    if (body !== null && typeof body !== 'object') return res.status(400).json({ error: 'Ungültige Daten' });
+  } else {
+    if (!Array.isArray(body)) return res.status(400).json({ error: 'Ungültige Daten' });
+  }
   try {
-    dataStore.writeData(type, req.body);
-    broadcastDataUpdate(type, res);
+    dataStore.writeData(type, body);
+    broadcastDataUpdate(type);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
