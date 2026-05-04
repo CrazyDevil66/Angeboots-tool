@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import FormField, { Input } from '../components/FormField';
-import { loadKunden, saveKunden, loadAngebote } from '../lib/storage';
+import { saveKunden } from '../lib/storage';
 
 const leerKunde = { id: null, anrede: '', firma: '', name: '', strasse: '', plz: '', ort: '', email: '', telefon: '' };
 
@@ -180,12 +180,10 @@ function KundeDrawer({ kunde, angebote, onEdit, onDelete, onClose, onNeuesAngebo
   );
 }
 
-export default function KundenListe({ navigate, onRefresh }) {
-  const [kunden, setKunden] = useState(loadKunden);
+export default function KundenListe({ navigate, kunden, setKunden, angebote, token }) {
   const [suche, setSuche] = useState('');
   const [selected, setSelected] = useState(null);
   const [drawerMode, setDrawerMode] = useState('view');
-  const angebote = loadAngebote();
 
   const gefiltert = useMemo(() => {
     const q = suche.toLowerCase();
@@ -202,24 +200,22 @@ export default function KundenListe({ navigate, onRefresh }) {
     return { anzahl: ka.length, umsatz };
   }
 
-  function handleSave(k) {
+  async function handleSave(k) {
     const aktuell = kunden.some(c => c.id === k.id)
       ? kunden.map(c => c.id === k.id ? k : c)
       : [...kunden, k];
+    await saveKunden(token, aktuell);
     setKunden(aktuell);
-    saveKunden(aktuell);
     setSelected(k);
     setDrawerMode('view');
-    onRefresh?.();
   }
 
-  function handleDelete(k) {
+  async function handleDelete(k) {
     if (!confirm(`Kunden "${k.firma || k.name}" löschen? Angebote bleiben erhalten.`)) return;
     const aktuell = kunden.filter(c => c.id !== k.id);
+    await saveKunden(token, aktuell);
     setKunden(aktuell);
-    saveKunden(aktuell);
     setSelected(null);
-    onRefresh?.();
   }
 
   return (
