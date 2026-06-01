@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container version="2">
+  <Name>Angebots-tool</Name>
+  <Repository>crazydevil66/angebots-tool:latest</Repository>
+  <Registry>https://hub.docker.com/r/crazydevil66/angebots-tool</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/CrazyDevil66/Angebots-tool/issues</Support>
+  <Project>https://github.com/CrazyDevil66/Angebots-tool</Project>
+  <Overview>Ein praktisches Tool zur Verwaltung von Angeboten.</Overview>
+  <Category>Tools: Utility:</Category>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/CrazyDevil66/Angebots-tool/main/angebots-tool.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/CrazyDevil66/Angebots-tool/main/logo.png</Icon>
+  <Config Name="WebUI Port" Target="3000" Default="3000" Mode="tcp" Description="Der Port für die Weboberfläche" Type="Port" Display="always" Required="true" Mask="false"/>
+</Container>
