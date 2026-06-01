@@ -37,7 +37,6 @@ export default function LoginScreen({ onComplete }) {
             </div>
             <div>
               <div className="font-bold text-white text-sm leading-tight">AngebotsTool</div>
-              <div className="text-[11px] text-slate-500">by Objektrausch</div>
             </div>
           </div>
 
