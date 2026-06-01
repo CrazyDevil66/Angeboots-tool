@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Building2, CheckCircle2, ImagePlus, Trash2, FileText, CreditCard, Settings2, AlignLeft, BookOpen, Plus, Download, Upload, Users, Mail } from 'lucide-react';
 import FormField, { Input, Textarea, Select } from '../components/FormField';
 import FirmenPreview from '../components/FirmenPreview';
-import { loadFirma, saveFirma, loadKatalog, saveKatalog, loadKunden, saveKunden, loadAngebote } from '../lib/storage';
+import { saveFirma, saveKatalog, saveKunden, saveAngebote } from '../lib/storage';
 import { defaultData, einheiten } from '../lib/defaultData';
 import BenutzerVerwaltung from './BenutzerVerwaltung';
 import { apiGetSmtp, apiSaveSmtp, apiTestSmtp, clearToken } from '../lib/auth';
@@ -27,9 +27,7 @@ const TABS = [
   { id: 'email',    label: 'E-Mail',        icon: Mail,     adminOnly: true },
 ];
 
-export default function Einstellungen({ token, currentUser, onLogout }) {
-  const [firma,   setFirma]   = useState(() => loadFirma() || defaultData.firma);
-  const [katalog, setKatalog] = useState(() => loadKatalog());
+export default function Einstellungen({ token, currentUser, onLogout, firma, setFirma, kunden, setKunden, angebote, setAngebote, katalog, setKatalog }) {
   const [saved,   setSaved]   = useState(false);
   const [tab,     setTab]     = useState('firma');
   const timer     = useRef(null);
@@ -68,6 +66,7 @@ export default function Einstellungen({ token, currentUser, onLogout }) {
 
   const fileRef   = useRef(null);
   const importRef = useRef(null);
+  const saveTimer = useRef(null);
 
   function triggerSaved() {
     setSaved(true);
@@ -76,9 +75,13 @@ export default function Einstellungen({ token, currentUser, onLogout }) {
   }
 
   useEffect(() => {
-    saveFirma(firma);
-    triggerSaved();
-    return () => clearTimeout(timer.current);
+    if (!token || !firma) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      await saveFirma(token, firma);
+      triggerSaved();
+    }, 500);
+    return () => clearTimeout(saveTimer.current);
   }, [firma]);
 
   const set = (field, val) => setFirma(prev => ({ ...prev, [field]: val }));
@@ -92,37 +95,37 @@ export default function Einstellungen({ token, currentUser, onLogout }) {
     e.target.value = '';
   }
 
-  function katalogUpdate(id, field, value) {
+  async function katalogUpdate(id, field, value) {
     const neu = katalog.map(item => item.id === id ? { ...item, [field]: value } : item);
     setKatalog(neu);
-    saveKatalog(neu);
+    await saveKatalog(token, neu);
     triggerSaved();
   }
 
-  function katalogAdd() {
+  async function katalogAdd() {
     const neu = [
       ...katalog,
       { id: crypto.randomUUID(), bezeichnung: '', beschreibung: '', einheit: 'Stk.', einzelpreis: 0 },
     ];
     setKatalog(neu);
-    saveKatalog(neu);
+    await saveKatalog(token, neu);
     triggerSaved();
   }
 
-  function katalogDelete(id) {
+  async function katalogDelete(id) {
     const neu = katalog.filter(item => item.id !== id);
     setKatalog(neu);
-    saveKatalog(neu);
+    await saveKatalog(token, neu);
     triggerSaved();
   }
 
   function handleExport() {
     const backup = {
       exportedAt: new Date().toISOString(),
-      firma: loadFirma(),
-      kunden: loadKunden(),
-      angebote: loadAngebote(),
-      katalog: loadKatalog(),
+      firma,
+      kunden,
+      angebote,
+      katalog,
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
@@ -137,14 +140,14 @@ export default function Einstellungen({ token, currentUser, onLogout }) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => {
+    reader.onload = async ev => {
       try {
-        const data = JSON.parse(ev.target.result);
-        if (data.firma)    saveFirma(data.firma);
-        if (data.kunden)   saveKunden(data.kunden);
-        if (data.katalog)  saveKatalog(data.katalog);
-        if (data.angebote) localStorage.setItem('objektrausch_angebote', JSON.stringify(data.angebote));
-        window.location.reload();
+        const backup = JSON.parse(ev.target.result);
+        if (backup.firma)    { await saveFirma(token, backup.firma);       setFirma(backup.firma); }
+        if (backup.kunden)   { await saveKunden(token, backup.kunden);     setKunden(backup.kunden); }
+        if (backup.katalog)  { await saveKatalog(token, backup.katalog);   setKatalog(backup.katalog); }
+        if (backup.angebote) { await saveAngebote(token, backup.angebote); setAngebote(backup.angebote); }
+        triggerSaved();
       } catch {
         alert('Ungültige Backup-Datei.');
       }

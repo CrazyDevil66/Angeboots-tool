@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './views/Dashboard';
 import AngeboteListe from './views/AngeboteListe';
@@ -9,8 +9,12 @@ import LoginScreen from './components/LoginScreen';
 import SetupScreen from './components/SetupScreen';
 import InviteScreen from './components/InviteScreen';
 import ChangePasswordModal from './components/ChangePasswordModal';
-import { loadAngebote, loadKunden, autoMarkAbgelaufen } from './lib/storage';
+import {
+  loadFirma, loadKunden, loadAngebote, loadKatalog,
+  saveAngebote, autoMarkAbgelaufen,
+} from './lib/storage';
 import { apiSetupRequired, apiMe, getToken, saveToken, clearToken } from './lib/auth';
+import { defaultData } from './lib/defaultData';
 
 function parseJwt(token) {
   try {
@@ -21,7 +25,46 @@ function parseJwt(token) {
 export default function App() {
   const [auth, setAuth] = useState({ loading: true, setupRequired: false, token: null, user: null });
   const [nav, setNav] = useState({ view: 'dashboard', params: {} });
-  const [refreshKey, setRefreshKey] = useState(0);
+
+  const [firma,    setFirma]    = useState(null);
+  const [kunden,   setKunden]   = useState([]);
+  const [angebote, setAngebote] = useState([]);
+  const [katalog,  setKatalog]  = useState([]);
+
+  const eventSourceRef = useRef(null);
+
+  async function loadAllData(token) {
+    const [f, k, a, kat] = await Promise.all([
+      loadFirma(token),
+      loadKunden(token),
+      loadAngebote(token),
+      loadKatalog(token),
+    ]);
+    setFirma(f || defaultData.firma);
+    setKunden(k);
+    setKatalog(kat);
+    const { updated, changed } = autoMarkAbgelaufen(a);
+    if (changed) {
+      await saveAngebote(token, updated);
+      setAngebote(updated);
+    } else {
+      setAngebote(a);
+    }
+  }
+
+  function openSSE(token) {
+    if (eventSourceRef.current) eventSourceRef.current.close();
+    const es = new EventSource(`/api/events?token=${encodeURIComponent(token)}`);
+    es.onmessage = async (e) => {
+      const { dataType } = JSON.parse(e.data);
+      if (dataType === 'firma')    setFirma(await loadFirma(token));
+      if (dataType === 'kunden')   setKunden(await loadKunden(token));
+      if (dataType === 'angebote') setAngebote(await loadAngebote(token));
+      if (dataType === 'katalog')  setKatalog(await loadKatalog(token));
+    };
+    es.onerror = () => {};
+    eventSourceRef.current = es;
+  }
 
   useEffect(() => {
     const inviteMatch = window.location.pathname.match(/^\/invite\/(.+)$/);
@@ -39,6 +82,8 @@ export default function App() {
       if (token) {
         const user = await apiMe(token);
         if (user) {
+          await loadAllData(token);
+          openSSE(token);
           setAuth({ loading: false, setupRequired: false, token, user });
           return;
         }
@@ -46,31 +91,35 @@ export default function App() {
       }
       setAuth({ loading: false, setupRequired: false, token: null, user: null });
     })();
+    return () => { if (eventSourceRef.current) eventSourceRef.current.close(); };
   }, []);
 
-  useEffect(() => { if (auth.user) autoMarkAbgelaufen(); }, [auth.user]);
-
-  function handleAuthComplete(token) {
+  async function handleAuthComplete(token) {
     const payload = parseJwt(token);
+    saveToken(token);
+    if (!payload?.mustChangePassword) {
+      await loadAllData(token);
+      openSSE(token);
+    }
     setAuth({ loading: false, setupRequired: false, token, user: payload });
   }
 
   function handleLogout() {
+    if (eventSourceRef.current) { eventSourceRef.current.close(); eventSourceRef.current = null; }
     clearToken();
-    // App-Daten aus localStorage löschen damit sie beim nächsten Login nicht sichtbar sind
-    localStorage.removeItem('objektrausch_angebote');
-    localStorage.removeItem('objektrausch_kunden');
-    localStorage.removeItem('objektrausch_firma');
-    localStorage.removeItem('objektrausch_katalog');
+    setFirma(null);
+    setKunden([]);
+    setAngebote([]);
+    setKatalog([]);
     setAuth({ loading: false, setupRequired: false, token: null, user: null });
   }
 
   const navigate = useCallback((view, params = {}) => setNav({ view, params }), []);
-  const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
+
   const counts = useMemo(() => ({
-    angebote: loadAngebote().length,
-    kunden: loadKunden().length,
-  }), [refreshKey]);
+    angebote: angebote.length,
+    kunden: kunden.length,
+  }), [angebote, kunden]);
 
   if (auth.loading) {
     return (
@@ -86,21 +135,30 @@ export default function App() {
   if (!auth.token) return <LoginScreen onComplete={handleAuthComplete} />;
   if (auth.user?.mustChangePassword) return <ChangePasswordModal token={auth.token} onComplete={handleAuthComplete} />;
 
+  const sharedProps = {
+    navigate,
+    token: auth.token,
+    currentUser: auth.user,
+    firma, setFirma,
+    kunden, setKunden,
+    angebote, setAngebote,
+    katalog, setKatalog,
+  };
+
   function renderView() {
-    const props = { navigate, onRefresh: refresh, token: auth.token, currentUser: auth.user };
     switch (nav.view) {
-      case 'dashboard':      return <Dashboard {...props} />;
-      case 'angebote':       return <AngeboteListe {...props} />;
-      case 'angebot-editor': return <AngebotEditor {...props} params={nav.params} />;
-      case 'kunden':         return <KundenListe {...props} />;
-      case 'einstellungen':  return <Einstellungen token={auth.token} currentUser={auth.user} onLogout={handleLogout} />;
-      default:               return <Dashboard {...props} />;
+      case 'dashboard':      return <Dashboard {...sharedProps} />;
+      case 'angebote':       return <AngeboteListe {...sharedProps} />;
+      case 'angebot-editor': return <AngebotEditor {...sharedProps} params={nav.params} />;
+      case 'kunden':         return <KundenListe {...sharedProps} />;
+      case 'einstellungen':  return <Einstellungen {...sharedProps} onLogout={handleLogout} />;
+      default:               return <Dashboard {...sharedProps} />;
     }
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar currentView={nav.view} onNavigate={navigate} counts={counts} />
+      <Sidebar currentView={nav.view} onNavigate={navigate} counts={counts} onLogout={handleLogout} />
       <main className="flex-1 overflow-y-auto">{renderView()}</main>
     </div>
   );

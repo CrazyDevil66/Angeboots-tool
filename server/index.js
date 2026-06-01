@@ -6,8 +6,9 @@ const crypto = require('crypto');
 const users = require('./users');
 const auth = require('./auth');
 const mailer = require('./mailer');
+const dataStore = require('./data');
 
-const DATA_DIR = process.env.DATA_DIR || '/data';
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 const PORT = process.env.PORT || 3000;
 const DIST_DIR = path.join(__dirname, '..', 'dist');
@@ -36,6 +37,16 @@ function getJwtSecret() {
 }
 
 const JWT_SECRET = getJwtSecret();
+
+const sseClients = new Set();
+
+function broadcastDataUpdate(dataType, excludeRes) {
+  const msg = `data: ${JSON.stringify({ dataType })}\n\n`;
+  for (const client of sseClients) {
+    if (client === excludeRes) continue;
+    try { client.write(msg); } catch { sseClients.delete(client); }
+  }
+}
 
 function makeToken(user) {
   return jwt.sign({
@@ -235,8 +246,52 @@ app.post('/api/config/smtp/test', requireAuth, requireAdmin, async (req, res) =>
   }
 });
 
+// ── Daten-API ────────────────────────────────────────────────────────────────
+
+app.get('/api/events', (req, res) => {
+  const token = req.query.token;
+  if (!token) return res.status(401).json({ error: 'Token fehlt' });
+  try { jwt.verify(token, JWT_SECRET); } catch {
+    return res.status(401).json({ error: 'Ungültiger Token' });
+  }
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.write(':\n\n');
+  sseClients.add(res);
+  req.on('close', () => sseClients.delete(res));
+});
+
+app.get('/api/data/:type', requireAuth, (req, res) => {
+  const { type } = req.params;
+  if (!dataStore.VALID_TYPES.has(type)) return res.status(400).json({ error: 'Ungültiger Typ' });
+  try {
+    res.json(dataStore.readData(type));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put('/api/data/:type', requireAuth, (req, res) => {
+  const { type } = req.params;
+  if (!dataStore.VALID_TYPES.has(type)) return res.status(400).json({ error: 'Ungültiger Typ' });
+  try {
+    dataStore.writeData(type, req.body);
+    broadcastDataUpdate(type, res);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Static files + SPA fallback (muss als letztes stehen)
 app.use(express.static(DIST_DIR));
 app.get('*', (_req, res) => res.sendFile(path.join(DIST_DIR, 'index.html')));
 
-app.listen(PORT, () => console.log(`AngebotsTool läuft auf Port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`AngebotsTool läuft auf Port ${PORT}`);
+  console.log(`Datenspeicher: ${DATA_DIR}`);
+});

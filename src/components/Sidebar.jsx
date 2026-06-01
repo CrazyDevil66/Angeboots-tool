@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Settings, LogOut } from 'lucide-react';
 
 const MAIN_NAV = [
   { id: 'dashboard',  label: 'Dashboard', icon: LayoutDashboard },
@@ -27,7 +27,7 @@ function NavItem({ id, label, icon: Icon, active, count, onClick }) {
   );
 }
 
-export default function Sidebar({ currentView, onNavigate, counts = {} }) {
+export default function Sidebar({ currentView, onNavigate, counts = {}, onLogout }) {
   return (
     <aside className="w-56 bg-[#0f172a] flex flex-col flex-shrink-0 h-screen border-r border-slate-800">
       {/* Logo */}
@@ -59,8 +59,8 @@ export default function Sidebar({ currentView, onNavigate, counts = {} }) {
         ))}
       </nav>
 
-      {/* Einstellungen unten */}
-      <div className="p-3 border-t border-slate-800/80">
+      {/* Einstellungen + Logout unten */}
+      <div className="p-3 border-t border-slate-800/80 flex flex-col gap-0.5">
         <NavItem
           id="einstellungen"
           label="Einstellungen"
@@ -68,6 +68,15 @@ export default function Sidebar({ currentView, onNavigate, counts = {} }) {
           active={currentView === 'einstellungen'}
           onClick={() => onNavigate('einstellungen')}
         />
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+          >
+            <LogOut size={16} />
+            <span className="font-medium">Abmelden</span>
+          </button>
+        )}
       </div>
     </aside>
   );

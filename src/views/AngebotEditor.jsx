@@ -17,8 +17,8 @@ import KatalogPicker from '../components/KatalogPicker';
 import { generatePDF } from '../lib/pdfGenerator';
 import { defaultData } from '../lib/defaultData';
 import {
-  loadFirma, loadAngebote, saveAngebot, updateAngebot, setAngebotStatus,
-  setAngebotRechnung, setMahnung, setBezahlt, nextAngebotNr, loadKatalog
+  saveAngebot, updateAngebot, setAngebotStatus,
+  setAngebotRechnung, setMahnung, setBezahlt, nextAngebotNr,
 } from '../lib/storage';
 
 function Collapse({ title, icon: Icon, children, defaultOpen = true }) {
@@ -40,18 +40,18 @@ function Collapse({ title, icon: Icon, children, defaultOpen = true }) {
   );
 }
 
-function initData(params) {
-  const firma = loadFirma() || defaultData.firma;
+function initData(params, firmaData, angeboteData) {
+  const firma = firmaData || defaultData.firma;
 
   if (params?.angebotId) {
-    const gespeichert = loadAngebote().find(a => a.id === params.angebotId);
+    const gespeichert = angeboteData.find(a => a.id === params.angebotId);
     if (gespeichert) return { ...gespeichert.snapshot, firma };
   }
 
   const datum = new Date().toLocaleDateString('de-DE');
   const base = {
     ...defaultData,
-    angebotNr: nextAngebotNr(),
+    angebotNr: nextAngebotNr(angeboteData),
     datum,
     gueltigBis: add14Days(datum),
     betreff: 'Angebot',
@@ -76,65 +76,19 @@ function initData(params) {
   return base;
 }
 
-export default function AngebotEditor({ navigate, params = {}, onRefresh }) {
-  const [data, setData] = useState(() => initData(params));
+export default function AngebotEditor({ navigate, params = {}, firma, kunden = [], angebote = [], setAngebote, katalog = [], token }) {
+  const gespeichert = params?.angebotId ? angebote.find(a => a.id === params.angebotId) : null;
+
+  const [data, setData] = useState(() => initData(params, firma, angebote));
   const [aktivesId, setAktivesId] = useState(params?.angebotId || null);
-  const [status, setStatus] = useState(() => {
-    if (params?.angebotId) {
-      const a = loadAngebote().find(x => x.id === params.angebotId);
-      return a?.status || 'entwurf';
-    }
-    return 'entwurf';
-  });
-  const [rechnungsNr, setRechnungsNr] = useState(() => {
-    if (params?.angebotId) {
-      const a = loadAngebote().find(x => x.id === params.angebotId);
-      return a?.rechnungsNr || null;
-    }
-    return null;
-  });
-  const [rechnungsDatum, setRechnungsDatum] = useState(() => {
-    if (params?.angebotId) {
-      const a = loadAngebote().find(x => x.id === params.angebotId);
-      return a?.rechnungsDatum || null;
-    }
-    return null;
-  });
-  const [rechnungsBetreff, setRechnungsBetreff]       = useState(() => {
-    if (params?.angebotId) {
-      const a = loadAngebote().find(x => x.id === params.angebotId);
-      return a?.rechnungsBetreff || null;
-    }
-    return null;
-  });
-  const [rechnungsEinleitung, setRechnungsEinleitung] = useState(() => {
-    if (params?.angebotId) {
-      const a = loadAngebote().find(x => x.id === params.angebotId);
-      return a?.rechnungsEinleitung || null;
-    }
-    return null;
-  });
-  const [rechnungsHinweise, setRechnungsHinweise]     = useState(() => {
-    if (params?.angebotId) {
-      const a = loadAngebote().find(x => x.id === params.angebotId);
-      return a?.rechnungsHinweise || null;
-    }
-    return null;
-  });
-  const [mahnStufe, setMahnStufe] = useState(() => {
-    if (params?.angebotId) {
-      const a = loadAngebote().find(x => x.id === params.angebotId);
-      return a?.mahnStufe || 0;
-    }
-    return 0;
-  });
-  const [mahnGebuehren, setMahnGebuehren] = useState(() => {
-    if (params?.angebotId) {
-      const a = loadAngebote().find(x => x.id === params.angebotId);
-      return a?.mahnGebuehren || [];
-    }
-    return [];
-  });
+  const [status, setStatus] = useState(gespeichert?.status || 'entwurf');
+  const [rechnungsNr, setRechnungsNr] = useState(gespeichert?.rechnungsNr || null);
+  const [rechnungsDatum, setRechnungsDatum] = useState(gespeichert?.rechnungsDatum || null);
+  const [rechnungsBetreff, setRechnungsBetreff] = useState(gespeichert?.rechnungsBetreff || null);
+  const [rechnungsEinleitung, setRechnungsEinleitung] = useState(gespeichert?.rechnungsEinleitung || null);
+  const [rechnungsHinweise, setRechnungsHinweise] = useState(gespeichert?.rechnungsHinweise || null);
+  const [mahnStufe, setMahnStufe] = useState(gespeichert?.mahnStufe || 0);
+  const [mahnGebuehren, setMahnGebuehren] = useState(gespeichert?.mahnGebuehren || []);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [savedHint, setSavedHint] = useState(false);
   const [rechnungModalOffen, setRechnungModalOffen] = useState(false);
@@ -179,24 +133,26 @@ export default function AngebotEditor({ navigate, params = {}, onRefresh }) {
     }));
   }
 
-  function handleSpeichern() {
+  async function handleSpeichern() {
     if (aktivesId) {
-      updateAngebot(aktivesId, data);
-      setAngebotStatus(aktivesId, status);
+      const updated = await updateAngebot(token, aktivesId, data, status);
+      setAngebote(updated);
     } else {
-      const eintrag = saveAngebot(data);
+      const { eintrag, updated } = await saveAngebot(token, data);
       setAktivesId(eintrag.id);
-      setAngebotStatus(eintrag.id, status);
-      onRefresh?.();
+      setAngebote(updated);
     }
     setSavedHint(true);
     clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSavedHint(false), 2500);
   }
 
-  function handleStatusChange(neuerStatus) {
+  async function handleStatusChange(neuerStatus) {
     setStatus(neuerStatus);
-    if (aktivesId) setAngebotStatus(aktivesId, neuerStatus);
+    if (aktivesId) {
+      const updated = await setAngebotStatus(token, aktivesId, neuerStatus);
+      setAngebote(updated);
+    }
   }
 
   async function handlePDF() {
@@ -258,13 +214,14 @@ export default function AngebotEditor({ navigate, params = {}, onRefresh }) {
 
     let id = aktivesId;
     if (!id) {
-      const eintrag = saveAngebot(data);
+      const { eintrag, updated } = await saveAngebot(token, data);
       id = eintrag.id;
       setAktivesId(id);
-      onRefresh?.();
+      setAngebote(updated);
     }
-    setAngebotStatus(id, 'angenommen');
-    setAngebotRechnung(id, nr, rDatum, rBetreff, rEinleitung, rHinweise);
+    await setAngebotStatus(token, id, 'angenommen');
+    const updated = await setAngebotRechnung(token, id, nr, rDatum, rBetreff, rEinleitung, rHinweise);
+    setAngebote(updated);
     setStatus('angenommen');
 
     const rechnungData = {
@@ -298,12 +255,13 @@ export default function AngebotEditor({ navigate, params = {}, onRefresh }) {
 
     let id = aktivesId;
     if (!id) {
-      const eintrag = saveAngebot(data);
+      const { eintrag, updated } = await saveAngebot(token, data);
       id = eintrag.id;
       setAktivesId(id);
-      onRefresh?.();
+      setAngebote(updated);
     }
-    setMahnung(id, stufe, mahnungNr, datum, neueGebuehren);
+    const mahnUpdated = await setMahnung(token, id, stufe, mahnungNr, datum, neueGebuehren);
+    setAngebote(mahnUpdated);
 
     const mahnungData = { stufe, mahnungNr, datum, frist, mahngebuehr, text, vorherigeGebuehren };
     setPdfLoading(true);
@@ -312,11 +270,13 @@ export default function AngebotEditor({ navigate, params = {}, onRefresh }) {
     finally { setPdfLoading(false); }
   }
 
-  function handleBezahltMarkieren() {
+  async function handleBezahltMarkieren() {
     if (!confirm('Angebot/Rechnung als bezahlt markieren?')) return;
     setStatus('bezahlt');
-    if (aktivesId) setBezahlt(aktivesId);
-    onRefresh?.();
+    if (aktivesId) {
+      const updated = await setBezahlt(token, aktivesId);
+      setAngebote(updated);
+    }
   }
 
   function handleKundeAuswahl(k) {
@@ -342,7 +302,7 @@ export default function AngebotEditor({ navigate, params = {}, onRefresh }) {
 
   function handleReset() {
     if (confirm('Eingaben zurücksetzen?')) {
-      setData({ ...defaultData, firma: loadFirma() || defaultData.firma });
+      setData({ ...defaultData, firma: firma || defaultData.firma });
       setAktivesId(null);
       setStatus('entwurf');
     }
@@ -506,6 +466,7 @@ export default function AngebotEditor({ navigate, params = {}, onRefresh }) {
             <Collapse title="Kundendaten" icon={User}>
               <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100">
                 <KundenPicker
+                  kunden={kunden}
                   onSelect={handleKundeAuswahl}
                   onManage={() => navigate('kunden')}
                 />
@@ -618,7 +579,7 @@ export default function AngebotEditor({ navigate, params = {}, onRefresh }) {
 
       {katalogPickerOffen && (
         <KatalogPicker
-          katalog={loadKatalog()}
+          katalog={katalog}
           onAdd={neuePositionen => setData(d => ({
             ...d,
             positionen: [

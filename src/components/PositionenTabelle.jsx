@@ -7,6 +7,10 @@ function fmt(val) {
   return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function vkPreis(pos) {
+  return Number(pos.einzelpreis) * (1 + Number(pos.aufschlag || 0) / 100);
+}
+
 export default function PositionenTabelle({ positionen, onChange }) {
   function update(i, field, value) {
     const neu = positionen.map((p, idx) => idx === i ? { ...p, [field]: value } : p);
@@ -14,7 +18,7 @@ export default function PositionenTabelle({ positionen, onChange }) {
   }
 
   function addRow() {
-    onChange([...positionen, { bezeichnung: '', beschreibung: '', menge: 1, einheit: 'Stk.', einzelpreis: 0 }]);
+    onChange([...positionen, { bezeichnung: '', beschreibung: '', menge: 1, einheit: 'Stk.', einzelpreis: 0, aufschlag: 0 }]);
   }
 
   function remove(i) {
@@ -22,17 +26,19 @@ export default function PositionenTabelle({ positionen, onChange }) {
     onChange(positionen.filter((_, idx) => idx !== i));
   }
 
-  const netto = positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
+  const netto = positionen.reduce((s, p) => s + Number(p.menge) * vkPreis(p), 0);
 
   return (
     <div>
       {/* Tabellen-Header */}
-      <div className="grid grid-cols-[32px_1fr_80px_90px_110px_110px_40px] gap-2 px-2 pb-2 border-b border-slate-100">
+      <div className="grid grid-cols-[28px_1fr_68px_76px_88px_60px_88px_96px_36px] gap-2 px-2 pb-2 border-b border-slate-100">
         <span />
         <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Beschreibung</span>
         <span className="text-xs font-medium text-slate-400 uppercase tracking-wide text-center">Menge</span>
         <span className="text-xs font-medium text-slate-400 uppercase tracking-wide text-center">Einheit</span>
-        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide text-right">Einzelpreis</span>
+        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide text-right">EK-Preis</span>
+        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide text-center">Aufschl.</span>
+        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide text-right">VK-Preis</span>
         <span className="text-xs font-medium text-slate-400 uppercase tracking-wide text-right">Gesamt</span>
         <span />
       </div>
@@ -40,11 +46,12 @@ export default function PositionenTabelle({ positionen, onChange }) {
       {/* Positionen */}
       <div className="flex flex-col gap-1 mt-2">
         {positionen.map((pos, i) => {
-          const gesamt = Number(pos.menge) * Number(pos.einzelpreis);
+          const vk = vkPreis(pos);
+          const gesamt = Number(pos.menge) * vk;
           return (
             <div
               key={i}
-              className="grid grid-cols-[32px_1fr_80px_90px_110px_110px_40px] gap-2 items-start
+              className="grid grid-cols-[28px_1fr_68px_76px_88px_60px_88px_96px_36px] gap-2 items-start
                 bg-slate-50 rounded-xl p-2 hover:bg-indigo-50/40 transition-colors group"
             >
               <div className="flex items-center justify-center h-9 text-slate-300 group-hover:text-slate-400">
@@ -93,8 +100,31 @@ export default function PositionenTabelle({ positionen, onChange }) {
                 placeholder="0,00"
               />
 
+              {/* Aufschlag % */}
+              <div className="relative flex items-center">
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={pos.aufschlag ?? 0}
+                  onChange={e => update(i, 'aufschlag', e.target.value)}
+                  className="w-full px-2 pr-5 py-2 rounded-lg border border-slate-200 text-sm text-right bg-white
+                    focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+                  placeholder="0"
+                />
+                <span className="absolute right-1.5 text-xs text-slate-400 pointer-events-none">%</span>
+              </div>
+
+              {/* VK-Preis (berechnet) */}
               <div className="flex items-center justify-end h-9">
-                <span className="text-sm font-medium text-slate-700">
+                <span className={`text-sm font-medium ${Number(pos.aufschlag) > 0 ? 'text-emerald-600' : 'text-slate-500'}`}>
+                  {fmt(vk)} €
+                </span>
+              </div>
+
+              {/* Gesamt */}
+              <div className="flex items-center justify-end h-9">
+                <span className="text-sm font-semibold text-slate-700">
                   {fmt(gesamt)} €
                 </span>
               </div>

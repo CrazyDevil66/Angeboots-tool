@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>AngebotsTool</Name>
+  <Repository>crazydevil35/angebotstool:latest</Repository>
+  <Registry></Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Overview>Angebots-Tool – Angebote erstellen und verwalten (Node.js/Express)</Overview>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <Icon></Icon>
+  <ExtraParams></ExtraParams>
+  <PostArgs></PostArgs>
+  <CPUset></CPUset>
+  <DonateText></DonateText>
+  <DonateLink></DonateLink>
+
+  <!-- Port -->
+  <Config
+    Name="WebUI Port"
+    Target="3000"
+    Default="3000"
+    Mode="tcp"
+    Description="Externer Port, über den das Angebots-Tool erreichbar ist."
+    Type="Port"
+    Display="always"
+    Required="true"
+    Mask="false">3000</Config>
+
+  <!-- Volume -->
+  <Config
+    Name="Datenspeicher"
+    Target="/app/data"
+    Default="/mnt/user/appdata/angebots-tool"
+    Mode="rw"
+    Description="Persistentes Verzeichnis für Daten, Konfiguration und Benutzer."
+    Type="Path"
+    Display="always"
+    Required="true"
+    Mask="false">/mnt/user/appdata/angebots-tool</Config>
+
+  <!-- Umgebungsvariablen -->
+  <Config
+    Name="JWT_SECRET"
+    Target="JWT_SECRET"
+    Default=""
+    Mode=""
+    Description="Sicherer Zufallswert für JWT-Token. Wird beim ersten Start automatisch generiert, wenn leer gelassen."
+    Type="Variable"
+    Display="always"
+    Required="false"
+    Mask="true"></Config>
+
+  <Config
+    Name="BASE_URL"
+    Target="BASE_URL"
+    Default=""
+    Mode=""
+    Description="Externe URL des Servers (z.B. https://angebote.meinserver.de). Wird für Einladungslinks verwendet."
+    Type="Variable"
+    Display="always"
+    Required="false"
+    Mask="false"></Config>
+
+  <Config
+    Name="PORT"
+    Target="PORT"
+    Default="3000"
+    Mode=""
+    Description="Interner Port des Node.js-Servers. Nicht ändern, außer wenn nötig."
+    Type="Variable"
+    Display="advanced"
+    Required="false"
+    Mask="false">3000</Config>
+</Container>

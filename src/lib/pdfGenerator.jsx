@@ -35,6 +35,7 @@ const s = StyleSheet.create({
     color: C.textDark,
     backgroundColor: C.white,
     paddingBottom: 60,
+    paddingTop: 69,
   },
 
   // ── HEADER: nur Logo ──────────────────────────────
@@ -286,8 +287,12 @@ function fmt(n) {
   return Number(n || 0).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €';
 }
 
+function vkPreis(p) {
+  return Number(p.einzelpreis) * (1 + Number(p.aufschlag || 0) / 100);
+}
+
 function DokumentPDF({ data, typ = 'angebot' }) {
-  const netto  = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
+  const netto  = data.positionen.reduce((s, p) => s + Number(p.menge) * vkPreis(p), 0);
   const mwst   = netto * (Number(data.mwstSatz) / 100);
   const brutto = netto + mwst;
   const heute  = new Date().toLocaleDateString('de-DE');
@@ -305,16 +310,16 @@ function DokumentPDF({ data, typ = 'angebot' }) {
     <Document>
       <Page size="A4" style={s.page}>
 
-        {/* ── KOPFZEILE: nur Logo ── */}
-        <View style={s.header}>
-          {f.logo
-            ? <Image src={f.logo} style={s.headerLogo} />
-            : <Text style={s.headerFirmaName}>{f.name || 'Firmenname'}</Text>
-          }
+        {/* ── KOPFZEILE: alle Seiten ── */}
+        <View fixed style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+          <View style={s.header}>
+            {f.logo
+              ? <Image src={f.logo} style={s.headerLogo} />
+              : <Text style={s.headerFirmaName}>{f.name || 'Firmenname'}</Text>
+            }
+          </View>
+          <View style={s.accentBar} />
         </View>
-
-        {/* Gelber Akzentstreifen */}
-        <View style={s.accentBar} />
 
         {/* ── BODY ── */}
         <View style={s.body}>
@@ -385,9 +390,9 @@ function DokumentPDF({ data, typ = 'angebot' }) {
               </View>
               <Text style={[s.colQty,   s.tdText]}>{p.menge}</Text>
               <Text style={[s.colUnit,  s.tdText]}>{p.einheit || 'Stk.'}</Text>
-              <Text style={[s.colPrice, s.tdText]}>{fmt(p.einzelpreis)}</Text>
+              <Text style={[s.colPrice, s.tdText]}>{fmt(vkPreis(p))}</Text>
               <Text style={[s.colTotal, s.tdText, { fontWeight: 700 }]}>
-                {fmt(Number(p.menge) * Number(p.einzelpreis))}
+                {fmt(Number(p.menge) * vkPreis(p))}
               </Text>
             </View>
           ))}
@@ -446,7 +451,7 @@ function DokumentPDF({ data, typ = 'angebot' }) {
 
 function MahnungPDF({ data, mahnung }) {
   const f      = data.firma;
-  const netto  = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
+  const netto  = data.positionen.reduce((s, p) => s + Number(p.menge) * vkPreis(p), 0);
   const mwst   = netto * (Number(data.mwstSatz) / 100);
   const brutto = netto + mwst;
   const gebuehr = Number(mahnung.mahngebuehr || 0);
@@ -470,13 +475,15 @@ function MahnungPDF({ data, mahnung }) {
     <Document>
       <Page size="A4" style={s.page}>
 
-        <View style={s.header}>
-          {f.logo
-            ? <Image src={f.logo} style={s.headerLogo} />
-            : <Text style={s.headerFirmaName}>{f.name || 'Firmenname'}</Text>
-          }
+        <View fixed style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
+          <View style={s.header}>
+            {f.logo
+              ? <Image src={f.logo} style={s.headerLogo} />
+              : <Text style={s.headerFirmaName}>{f.name || 'Firmenname'}</Text>
+            }
+          </View>
+          <View style={s.accentBar} />
         </View>
-        <View style={s.accentBar} />
 
         <View style={s.body}>
           <View style={s.topRow}>

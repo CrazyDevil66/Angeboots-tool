@@ -37,7 +37,7 @@ export const defaultData = {
   einleitung: 'vielen Dank für Ihr Interesse. Gerne unterbreiten wir Ihnen folgendes Angebot:',
   mwstSatz: 19,
   positionen: [
-    { bezeichnung: '', beschreibung: '', menge: 1, einheit: 'Stk.', einzelpreis: 0 },
+    { bezeichnung: '', beschreibung: '', menge: 1, einheit: 'Stk.', einzelpreis: 0, aufschlag: 0 },
   ],
   hinweise: '',
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, RefreshCw, Mail, Shield, Key, Copy, Check } from 'lucide-react';
 import {
   apiGetUsers, apiCreateUser, apiUpdateUser, apiDeleteUser,
@@ -38,6 +38,7 @@ export default function BenutzerVerwaltung({ token, currentUser }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const resultTimer = useRef(null);
 
   const load = useCallback(async () => {
     const data = await apiGetUsers(token);
@@ -56,6 +57,10 @@ export default function BenutzerVerwaltung({ token, currentUser }) {
       if (mode === 'invite') {
         const inv = await apiInviteUser(token, user.id);
         setResult({ type: 'invite', emailSent: inv.emailSent, url: inv.inviteUrl, username: user.username });
+        if (inv.emailSent) {
+          clearTimeout(resultTimer.current);
+          resultTimer.current = setTimeout(() => setResult(null), 5000);
+        }
       } else {
         const pw = await apiResetPassword(token, user.id);
         setResult({ type: 'password', password: pw.password, username: user.username });

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Plus, Search, Download, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import StatusDropdown from '../components/StatusDropdown';
-import { loadAngebote, deleteAngebot, setAngebotStatus } from '../lib/storage';
+import { deleteAngebot, setAngebotStatus } from '../lib/storage';
 import { generatePDF } from '../lib/pdfGenerator';
 import { STATUS_LIST } from '../lib/statusConfig';
 
@@ -15,8 +15,7 @@ function fmt(num) {
   return Number(num || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export default function AngeboteListe({ navigate, onRefresh }) {
-  const [angebote, setAngebote] = useState(loadAngebote);
+export default function AngeboteListe({ navigate, angebote = [], setAngebote, token }) {
   const [suche, setSuche] = useState('');
   const [kundeFilter, setKundeFilter] = useState('alle');
   const [aktiveTab, setAktiveTab] = useState('alle');
@@ -48,16 +47,15 @@ export default function AngeboteListe({ navigate, onRefresh }) {
     });
   }, [angebote, suche, kundeFilter, aktiveTab]);
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!confirm('Angebot endgültig löschen?')) return;
-    deleteAngebot(id);
-    setAngebote(loadAngebote());
-    onRefresh?.();
+    const updated = await deleteAngebot(token, id);
+    setAngebote(updated);
   }
 
-  function handleStatusChange(id, status) {
-    setAngebotStatus(id, status);
-    setAngebote(loadAngebote());
+  async function handleStatusChange(id, status) {
+    const updated = await setAngebotStatus(token, id, status);
+    setAngebote(updated);
   }
 
   async function handlePDF(a) {

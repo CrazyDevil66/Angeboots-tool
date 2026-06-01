@@ -16,6 +16,7 @@ export default function InviteScreen({ inviteToken, onComplete }) {
     try {
       const { token } = await apiRedeemInvite(inviteToken, password);
       saveToken(token);
+      window.history.pushState({}, '', '/');
       onComplete(token);
     } catch (err) {
       setError(err.message);

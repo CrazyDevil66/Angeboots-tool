@@ -1,12 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, BookUser, X, UserCheck } from 'lucide-react';
-import { loadKunden } from '../lib/storage';
 
-export default function KundenPicker({ onSelect, onManage }) {
+export default function KundenPicker({ onSelect, onManage, kunden = [] }) {
   const [open, setOpen] = useState(false);
   const [suche, setSuche] = useState('');
   const ref = useRef(null);
-  const kunden = loadKunden();
 
   useEffect(() => {
     function handleOutside(e) {

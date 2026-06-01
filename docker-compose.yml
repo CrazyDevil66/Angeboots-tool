@@ -1,0 +1,12 @@
+services:
+  angebots-tool:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=3000
+      # JWT_SECRET=<sicherer-zufallswert>
+      # BASE_URL=https://meinserver.de
+    restart: unless-stopped
