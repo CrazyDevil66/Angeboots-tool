@@ -1,16 +1,74 @@
-# React + Vite
+# AngebotsTool
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Eine selbst gehostete Web-App zum Erstellen und Verwalten von Angeboten – optimiert für den Einsatz auf Unraid-Servern.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Angebote erstellen** – Positionen, Preise, Kundeninfos und PDF-Export
+- **Kundenverwaltung** – Kunden anlegen und verwalten
+- **Dashboard** – Übersicht über alle Angebote und Aktivitäten
+- **Benutzerverwaltung** – Mehrere Benutzer mit Rollen (Admin / Benutzer)
+- **Einladungssystem** – Neue Benutzer per E-Mail einladen
+- **SMTP-Konfiguration** – E-Mail-Versand direkt aus der App konfigurierbar
+- **Authentifizierung** – JWT-basierter Login mit Brute-Force-Schutz
+- **Echtzeit-Sync** – Änderungen werden live auf allen geöffneten Tabs aktualisiert
 
-## React Compiler
+## Installation auf Unraid
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Docker Hub
 
-## Expanding the ESLint configuration
+Das Image ist verfügbar unter:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+crazydevil35/angebotstool:latest
+```
+
+### Über Community Applications
+
+Nach der Installation des CA-Plugins einfach nach **AngebotsTool** suchen und installieren. Alle Pfade und Ports sind vorausgefüllt.
+
+### Manuelle Docker-Installation
+
+```bash
+docker run -d \
+  --name AngebotsTool \
+  -p 3000:3000 \
+  -v /mnt/user/appdata/angebots-tool:/app/data \
+  -e BASE_URL=http://deine-ip:3000 \
+  --restart unless-stopped \
+  crazydevil35/angebotstool:latest
+```
+
+## Umgebungsvariablen
+
+| Variable | Beschreibung | Standard |
+|---|---|---|
+| `PORT` | Interner Port des Servers | `3000` |
+| `JWT_SECRET` | Geheimer Schlüssel für JWT-Token. Wird automatisch generiert wenn leer. | *(automatisch)* |
+| `BASE_URL` | Externe URL der App, z.B. `https://angebote.meinserver.de` | *(optional)* |
+
+## Datenspeicherung
+
+Alle Daten werden im Container-Pfad `/app/data` gespeichert:
+
+- `users.json` – Benutzerdaten
+- `config.json` – App-Konfiguration und JWT-Secret
+- `angebote.json`, `kunden.json` usw. – Anwendungsdaten
+
+Der Host-Pfad `/mnt/user/appdata/angebots-tool` (oder ein beliebiger anderer Pfad) muss als Volume eingebunden werden, damit die Daten bei Container-Updates erhalten bleiben.
+
+## Erster Start
+
+Beim ersten Aufruf der App wird ein **Erstkonfigurations-Assistent** gestartet, in dem der erste Admin-Account angelegt wird.
+
+## Technik
+
+- **Frontend:** React 19, Vite, Tailwind CSS
+- **Backend:** Node.js, Express
+- **Auth:** JWT mit automatisch generiertem Secret
+- **PDF:** @react-pdf/renderer
+- **Container:** Docker (Node.js 22 Alpine)
+
+## Lizenz
+
+MIT – siehe [LICENSE](LICENSE)
