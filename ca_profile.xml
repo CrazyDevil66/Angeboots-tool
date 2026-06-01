@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Maintainer>
-  <Icon></Icon>
-  <Profile>Selbst gehostetes Angebots-Tool zum Erstellen und Verwalten von Angeboten. Mit Benutzerverwaltung, PDF-Export und Einladungssystem.</Profile>
+  <Profile>
+    Selbst gehostetes Angebots-Tool zum Erstellen und Verwalten von Angeboten.
+    Mit Benutzerverwaltung, PDF-Export und Einladungssystem.
+  </Profile>
+  <WebPage>https://github.com/CrazyDevil66/Angeboots-tool</WebPage>
 </Maintainer>
