@@ -2,20 +2,23 @@
 <Container version="2">
   <Name>AngebotsTool</Name>
   <Repository>crazydevil35/angebotstool:latest</Repository>
-  <Registry></Registry>
+  <Registry>https://hub.docker.com/r/crazydevil35/angebotstool</Registry>
   <Network>bridge</Network>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Overview>Angebots-Tool – Angebote erstellen und verwalten (Node.js/Express)</Overview>
+  <Support>https://github.com/CrazyDevil66/Angeboots-tool</Support>
+  <Project>https://github.com/CrazyDevil66/Angeboots-tool</Project>
+  <Overview>Angebots-Tool zum Erstellen und Verwalten von Angeboten. Läuft als Node.js-Server mit persistentem Datenspeicher.</Overview>
+  <Category>Tools:</Category>
   <WebUI>http://[IP]:[PORT:3000]/</WebUI>
-  <Icon></Icon>
+  <TemplateURL>https://raw.githubusercontent.com/CrazyDevil66/Angeboots-tool/master/unraid-template.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/CrazyDevil66/Angeboots-tool/master/public/favicon.svg</Icon>
   <ExtraParams></ExtraParams>
   <PostArgs></PostArgs>
   <CPUset></CPUset>
   <DonateText></DonateText>
   <DonateLink></DonateLink>
 
-  <!-- Port -->
   <Config
     Name="WebUI Port"
     Target="3000"
@@ -27,7 +30,6 @@
     Required="true"
     Mask="false">3000</Config>
 
-  <!-- Volume -->
   <Config
     Name="Datenspeicher"
     Target="/app/data"
@@ -39,7 +41,6 @@
     Required="true"
     Mask="false">/mnt/user/appdata/angebots-tool</Config>
 
-  <!-- Umgebungsvariablen -->
   <Config
     Name="JWT_SECRET"
     Target="JWT_SECRET"
