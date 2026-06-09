@@ -131,7 +131,8 @@ function patchOffer(id, patch) {
   const existing = readOffer(id);
   if (!existing) throw new Error(`Angebot ${id} nicht gefunden`);
   const { snapshot, ...meta } = existing;
-  const newMeta = { ...meta, ...patch, updatedAt: new Date().toISOString() };
+  const { id: _id, savedAt: _savedAt, snapshot: _snap, ...safePatch } = patch;
+  const newMeta = { ...meta, ...safePatch, updatedAt: new Date().toISOString() };
   writeOffer(id, { ...newMeta, snapshot });
   const index = readIndex().map(e => e.id === id ? newMeta : e);
   writeIndex(index);
@@ -139,9 +140,9 @@ function patchOffer(id, patch) {
 }
 
 function removeOffer(id) {
-  deleteOfferFile(id);
   const index = readIndex().filter(e => e.id !== id);
   writeIndex(index);
+  deleteOfferFile(id);
   return index;
 }
 
@@ -159,6 +160,7 @@ function migrateIfNeeded() {
   }
 
   ensureDir();
+  writeIndex([]); // sentinel — prevents re-run if process crashes mid-migration
   const index = [];
   for (const old of oldAngebote) {
     if (!old.id) continue;
@@ -173,16 +175,16 @@ function migrateIfNeeded() {
       betreff:             old.betreff             || '',
       kundeDisplay:        old.kundeDisplay         || '—',
       kundeId:             old.kundeId             || null,
-      netto:               old.netto               || 0,
-      brutto:              old.brutto              || 0,
-      mwstSatz:            old.mwstSatz            || 19,
+      netto:               old.netto               ?? 0,
+      brutto:              old.brutto              ?? 0,
+      mwstSatz:            old.mwstSatz            ?? 19,
       status:              old.status              || 'entwurf',
       rechnungsNr:         old.rechnungsNr         || null,
       rechnungsDatum:      old.rechnungsDatum      || null,
       rechnungsBetreff:    old.rechnungsBetreff    || null,
       rechnungsEinleitung: old.rechnungsEinleitung || null,
       rechnungsHinweise:   old.rechnungsHinweise   || null,
-      mahnStufe:           old.mahnStufe           || 0,
+      mahnStufe:           old.mahnStufe           ?? 0,
       mahnGebuehren:       old.mahnGebuehren       || [],
       mahnungNr:           old.mahnungNr           || null,
       mahndatum:           old.mahndatum           || null,
