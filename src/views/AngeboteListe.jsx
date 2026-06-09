@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Plus, Search, Download, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import StatusDropdown from '../components/StatusDropdown';
-import { deleteAngebot, setAngebotStatus } from '../lib/storage';
+import { deleteAngebot, setAngebotStatus, loadAngebotFull } from '../lib/storage';
 import { generatePDF } from '../lib/pdfGenerator';
 import { STATUS_LIST } from '../lib/statusConfig';
 
@@ -15,7 +15,7 @@ function fmt(num) {
   return Number(num || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export default function AngeboteListe({ navigate, angebote = [], setAngebote, token }) {
+export default function AngeboteListe({ navigate, angebote = [], setAngebote, token, firma }) {
   const [suche, setSuche] = useState('');
   const [kundeFilter, setKundeFilter] = useState('alle');
   const [aktiveTab, setAktiveTab] = useState('alle');
@@ -61,17 +61,19 @@ export default function AngeboteListe({ navigate, angebote = [], setAngebote, to
   async function handlePDF(a) {
     setPdfLoading(a.id);
     try {
+      const full = await loadAngebotFull(token, a.id);
+      const snapshot = { ...full.snapshot, firma };
       if (a.rechnungsNr) {
         await generatePDF({
-          ...a.snapshot,
-          rechnungsNr:  a.rechnungsNr,
+          ...snapshot,
+          rechnungsNr:    a.rechnungsNr,
           rechnungsDatum: a.rechnungsDatum,
-          betreff:    a.rechnungsBetreff    ?? a.snapshot?.betreff,
-          einleitung: a.rechnungsEinleitung ?? a.snapshot?.einleitung,
-          hinweise:   a.rechnungsHinweise   ?? a.snapshot?.hinweise,
+          betreff:        a.rechnungsBetreff    ?? snapshot.betreff,
+          einleitung:     a.rechnungsEinleitung ?? snapshot.einleitung,
+          hinweise:       a.rechnungsHinweise   ?? snapshot.hinweise,
         }, 'rechnung');
       } else {
-        await generatePDF(a.snapshot);
+        await generatePDF(snapshot);
       }
     } catch (e) { console.error(e); }
     finally { setPdfLoading(null); }

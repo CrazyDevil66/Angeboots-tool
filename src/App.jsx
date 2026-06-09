@@ -11,7 +11,7 @@ import InviteScreen from './components/InviteScreen';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import {
   loadFirma, loadKunden, loadAngebote, loadKatalog,
-  saveAngebote, autoMarkAbgelaufen,
+  setAngebotStatus, autoMarkAbgelaufen,
 } from './lib/storage';
 import { apiSetupRequired, apiMe, getToken, saveToken, clearToken } from './lib/auth';
 import { defaultData } from './lib/defaultData';
@@ -45,8 +45,12 @@ export default function App() {
     setKatalog(kat);
     const { updated, changed } = autoMarkAbgelaufen(a);
     if (changed) {
-      await saveAngebote(token, updated);
-      setAngebote(updated);
+      const abgelaufen = updated.filter((u, i) => u !== a[i]);
+      let latestIndex = updated;
+      for (const entry of abgelaufen) {
+        latestIndex = await setAngebotStatus(token, entry.id, 'abgelaufen');
+      }
+      setAngebote(latestIndex);
     } else {
       setAngebote(a);
     }

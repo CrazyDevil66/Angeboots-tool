@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ChevronRight, FileText, ClipboardList, User, Settings,
   Download, Save, CheckCircle2, ChevronDown, ChevronUp, RotateCcw, Receipt, Mail,
@@ -18,7 +18,7 @@ import { generatePDF } from '../lib/pdfGenerator';
 import { defaultData } from '../lib/defaultData';
 import {
   saveAngebot, updateAngebot, setAngebotStatus,
-  setAngebotRechnung, setMahnung, setBezahlt, nextAngebotNr,
+  setAngebotRechnung, setMahnung, setBezahlt, nextAngebotNr, loadAngebotFull,
 } from '../lib/storage';
 
 function Collapse({ title, icon: Icon, children, defaultOpen = true }) {
@@ -43,10 +43,8 @@ function Collapse({ title, icon: Icon, children, defaultOpen = true }) {
 function initData(params, firmaData, angeboteData) {
   const firma = firmaData || defaultData.firma;
 
-  if (params?.angebotId) {
-    const gespeichert = angeboteData.find(a => a.id === params.angebotId);
-    if (gespeichert) return { ...gespeichert.snapshot, firma };
-  }
+  // Für bestehende Angebote: Snapshot wird async via useEffect geladen
+  if (params?.angebotId) return { ...defaultData, firma };
 
   const datum = new Date().toLocaleDateString('de-DE');
   const base = {
@@ -79,6 +77,7 @@ function initData(params, firmaData, angeboteData) {
 export default function AngebotEditor({ navigate, params = {}, firma, kunden = [], angebote = [], setAngebote, katalog = [], token }) {
   const gespeichert = params?.angebotId ? angebote.find(a => a.id === params.angebotId) : null;
 
+  const [loading, setLoading] = useState(!!params?.angebotId);
   const [data, setData] = useState(() => initData(params, firma, angebote));
   const [aktivesId, setAktivesId] = useState(params?.angebotId || null);
   const [status, setStatus] = useState(gespeichert?.status || 'entwurf');
@@ -95,6 +94,24 @@ export default function AngebotEditor({ navigate, params = {}, firma, kunden = [
   const [mahnModalOffen,    setMahnModalOffen]    = useState(false);
   const [katalogPickerOffen, setKatalogPickerOffen] = useState(false);
   const savedTimer = useRef(null);
+
+  useEffect(() => {
+    if (!params?.angebotId) return;
+    loadAngebotFull(token, params.angebotId)
+      .then(full => {
+        setData({ ...full.snapshot, firma: firma || defaultData.firma });
+        setStatus(full.status || 'entwurf');
+        setRechnungsNr(full.rechnungsNr || null);
+        setRechnungsDatum(full.rechnungsDatum || null);
+        setRechnungsBetreff(full.rechnungsBetreff || null);
+        setRechnungsEinleitung(full.rechnungsEinleitung || null);
+        setRechnungsHinweise(full.rechnungsHinweise || null);
+        setMahnStufe(full.mahnStufe || 0);
+        setMahnGebuehren(full.mahnGebuehren || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const set = useCallback((path, value) => {
     setData(prev => {
@@ -133,18 +150,25 @@ export default function AngebotEditor({ navigate, params = {}, firma, kunden = [
     }));
   }
 
+  const [saveError, setSaveError] = useState(null);
+
   async function handleSpeichern() {
-    if (aktivesId) {
-      const updated = await updateAngebot(token, aktivesId, data, status);
-      setAngebote(updated);
-    } else {
-      const { eintrag, updated } = await saveAngebot(token, data);
-      setAktivesId(eintrag.id);
-      setAngebote(updated);
+    setSaveError(null);
+    try {
+      if (aktivesId) {
+        const updated = await updateAngebot(token, aktivesId, data, status);
+        setAngebote(updated);
+      } else {
+        const { eintrag, updated } = await saveAngebot(token, data);
+        setAktivesId(eintrag.id);
+        setAngebote(updated);
+      }
+      setSavedHint(true);
+      clearTimeout(savedTimer.current);
+      savedTimer.current = setTimeout(() => setSavedHint(false), 2500);
+    } catch (e) {
+      setSaveError(e.message || 'Speichern fehlgeschlagen');
     }
-    setSavedHint(true);
-    clearTimeout(savedTimer.current);
-    savedTimer.current = setTimeout(() => setSavedHint(false), 2500);
   }
 
   async function handleStatusChange(neuerStatus) {
@@ -311,8 +335,22 @@ export default function AngebotEditor({ navigate, params = {}, firma, kunden = [
   const isNeu = !aktivesId;
   const betreffLabel = data.angebotNr || 'Neues Angebot';
 
+  if (loading) {
+    return (
+      <div className="min-h-full flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-full bg-gradient-to-br from-slate-50 to-indigo-50/20">
+      {saveError && (
+        <div className="sticky top-0 z-50 bg-red-500 text-white text-sm font-medium px-8 py-2 flex items-center justify-between">
+          <span>Fehler beim Speichern: {saveError}</span>
+          <button onClick={() => setSaveError(null)} className="ml-4 hover:opacity-70">✕</button>
+        </div>
+      )}
       {/* Topbar */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
         <div className="px-8 h-14 flex items-center justify-between gap-4">
