@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
-const VALID_TYPES = new Set(['firma', 'kunden', 'angebote', 'katalog']);
+const VALID_TYPES = new Set(['firma', 'kunden', 'katalog']);
 
 function dataFile(type) {
   return path.join(DATA_DIR, `${type}.json`);

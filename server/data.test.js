@@ -27,8 +27,8 @@ test('kunden: Default []', () => {
   assert.deepEqual(readData('kunden'), []);
 });
 
-test('angebote: Default []', () => {
-  assert.deepEqual(readData('angebote'), []);
+test('angebote ist kein gültiger Typ mehr', () => {
+  assert.throws(() => readData('angebote'), /Ungültiger/);
 });
 
 test('katalog: Default []', () => {
@@ -45,10 +45,9 @@ test('writeData und readData runden-trip für kunden', () => {
   assert.deepEqual(readData('kunden'), [{ id: '1', name: 'Kunde A' }]);
 });
 
-test('VALID_TYPES enthält alle 4 Typen', () => {
+test('VALID_TYPES enthält 3 Typen (firma, kunden, katalog)', () => {
   assert.ok(VALID_TYPES.has('firma'));
   assert.ok(VALID_TYPES.has('kunden'));
-  assert.ok(VALID_TYPES.has('angebote'));
   assert.ok(VALID_TYPES.has('katalog'));
-  assert.equal(VALID_TYPES.size, 4);
+  assert.equal(VALID_TYPES.size, 3);
 });

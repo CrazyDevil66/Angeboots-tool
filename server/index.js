@@ -7,6 +7,7 @@ const users = require('./users');
 const auth = require('./auth');
 const mailer = require('./mailer');
 const dataStore = require('./data');
+const angeboteStore = require('./angeboteStore');
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
@@ -37,6 +38,8 @@ function getJwtSecret() {
 }
 
 const JWT_SECRET = getJwtSecret();
+
+angeboteStore.migrateIfNeeded();
 
 const sseClients = new Set();
 
@@ -76,7 +79,7 @@ function requireAdmin(req, res, next) {
 
 const app = express();
 app.set('trust proxy', 1);
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Setup
 app.get('/api/setup', (_req, res) => {
@@ -282,6 +285,67 @@ app.put('/api/data/:type', requireAuth, (req, res) => {
     dataStore.writeData(type, req.body);
     broadcastDataUpdate(type, res);
     res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ── Angebote-API ────────────────────────────────────────────────────────────
+
+app.get('/api/angebote', requireAuth, (_req, res) => {
+  try {
+    res.json(angeboteStore.readIndex());
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/angebote', requireAuth, (req, res) => {
+  try {
+    const result = angeboteStore.createOffer(req.body);
+    broadcastDataUpdate('angebote', res);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/angebote/:id', requireAuth, (req, res) => {
+  try {
+    const offer = angeboteStore.readOffer(req.params.id);
+    if (!offer) return res.status(404).json({ error: 'Nicht gefunden' });
+    res.json(offer);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put('/api/angebote/:id', requireAuth, (req, res) => {
+  const { snapshot, status } = req.body;
+  try {
+    const index = angeboteStore.updateOffer(req.params.id, snapshot, status);
+    broadcastDataUpdate('angebote', res);
+    res.json({ index });
+  } catch (e) {
+    res.status(e.message.includes('nicht gefunden') ? 404 : 500).json({ error: e.message });
+  }
+});
+
+app.patch('/api/angebote/:id', requireAuth, (req, res) => {
+  try {
+    const index = angeboteStore.patchOffer(req.params.id, req.body);
+    broadcastDataUpdate('angebote', res);
+    res.json({ index });
+  } catch (e) {
+    res.status(e.message.includes('nicht gefunden') ? 404 : 500).json({ error: e.message });
+  }
+});
+
+app.delete('/api/angebote/:id', requireAuth, (req, res) => {
+  try {
+    const index = angeboteStore.removeOffer(req.params.id);
+    broadcastDataUpdate('angebote', res);
+    res.json({ index });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
