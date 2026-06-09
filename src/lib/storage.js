@@ -8,6 +8,16 @@ async function apiGet(token, endpoint) {
   return res.json();
 }
 
+async function apiPost(token, endpoint, body) {
+  const res = await fetch(`/api${endpoint}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`POST ${endpoint} fehlgeschlagen (${res.status})`);
+  return res.json();
+}
+
 async function apiPut(token, endpoint, body) {
   const res = await fetch(`/api${endpoint}`, {
     method: 'PUT',
@@ -15,6 +25,25 @@ async function apiPut(token, endpoint, body) {
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`PUT ${endpoint} fehlgeschlagen (${res.status})`);
+  return res.json();
+}
+
+async function apiPatch(token, endpoint, body) {
+  const res = await fetch(`/api${endpoint}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`PATCH ${endpoint} fehlgeschlagen (${res.status})`);
+  return res.json();
+}
+
+async function apiDelete(token, endpoint) {
+  const res = await fetch(`/api${endpoint}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`DELETE ${endpoint} fehlgeschlagen (${res.status})`);
   return res.json();
 }
 
@@ -29,7 +58,11 @@ export async function loadKunden(token) {
 }
 
 export async function loadAngebote(token) {
-  return apiGet(token, '/data/angebote');
+  return apiGet(token, '/angebote');
+}
+
+export async function loadAngebotFull(token, id) {
+  return apiGet(token, `/angebote/${id}`);
 }
 
 export async function loadKatalog(token) {
@@ -50,97 +83,48 @@ export async function saveKatalog(token, items) {
   await apiPut(token, '/data/katalog', items);
 }
 
-export async function saveAngebote(token, angebote) {
-  await apiPut(token, '/data/angebote', angebote);
-}
-
 // ── Angebot-Mutations ─────────────────────────────────────────────────────────
 
-function buildAngebotEintrag(data) {
-  const netto = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
-  const brutto = netto * (1 + Number(data.mwstSatz) / 100);
-  return {
-    id: crypto.randomUUID(),
-    savedAt: new Date().toISOString(),
-    angebotNr: data.angebotNr,
-    datum: data.datum,
-    betreff: data.betreff,
-    kundeDisplay: data.kunde.firma || data.kunde.name || '—',
-    kundeId: data.kunde?.id || null,
-    netto,
-    brutto,
-    mwstSatz: data.mwstSatz,
-    status: 'entwurf',
-    snapshot: data,
-  };
-}
-
-function applyPatch(angebote, id, updates) {
-  return angebote.map(a => a.id === id ? { ...a, ...updates } : a);
-}
-
-async function mutateAngebote(token, fn) {
-  const current = await loadAngebote(token);
-  const updated = fn(current);
-  await saveAngebote(token, updated);
-  return updated;
-}
-
 export async function saveAngebot(token, data) {
-  const eintrag = buildAngebotEintrag(data);
-  const updated = await mutateAngebote(token, arr => [eintrag, ...arr]);
-  return { eintrag, updated };
+  const result = await apiPost(token, '/angebote', data);
+  return { eintrag: result.entry, updated: result.index };
 }
 
 export async function updateAngebot(token, id, data, status) {
-  const netto = data.positionen.reduce((s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0);
-  const brutto = netto * (1 + Number(data.mwstSatz) / 100);
-  return mutateAngebote(token, arr => applyPatch(arr, id, {
-    updatedAt: new Date().toISOString(),
-    angebotNr: data.angebotNr,
-    datum: data.datum,
-    betreff: data.betreff,
-    kundeDisplay: data.kunde.firma || data.kunde.name || '—',
-    kundeId: data.kunde?.id || null,
-    netto,
-    brutto,
-    mwstSatz: data.mwstSatz,
-    status,
-    snapshot: data,
-  }));
+  const result = await apiPut(token, `/angebote/${id}`, { snapshot: data, status });
+  return result.index;
 }
 
 export async function setAngebotStatus(token, id, status) {
-  return mutateAngebote(token, arr =>
-    applyPatch(arr, id, { status, updatedAt: new Date().toISOString() })
-  );
+  const result = await apiPatch(token, `/angebote/${id}`, { status });
+  return result.index;
 }
 
 export async function deleteAngebot(token, id) {
-  return mutateAngebote(token, arr => arr.filter(a => a.id !== id));
+  const result = await apiDelete(token, `/angebote/${id}`);
+  return result.index;
 }
 
 export async function setMahnung(token, id, mahnStufe, mahnungNr, mahndatum, mahnGebuehren) {
-  return mutateAngebote(token, arr => applyPatch(arr, id, {
-    mahnStufe, mahnungNr, mahndatum, mahnGebuehren,
-    status: 'gemahnt',
-    updatedAt: new Date().toISOString(),
-  }));
+  const result = await apiPatch(token, `/angebote/${id}`, {
+    mahnStufe, mahnungNr, mahndatum, mahnGebuehren, status: 'gemahnt',
+  });
+  return result.index;
 }
 
 export async function setBezahlt(token, id) {
-  return mutateAngebote(token, arr => applyPatch(arr, id, {
+  const result = await apiPatch(token, `/angebote/${id}`, {
     status: 'bezahlt',
     bezahltAm: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }));
+  });
+  return result.index;
 }
 
 export async function setAngebotRechnung(token, id, rechnungsNr, rechnungsDatum, rechnungsBetreff, rechnungsEinleitung, rechnungsHinweise) {
-  return mutateAngebote(token, arr => applyPatch(arr, id, {
+  const result = await apiPatch(token, `/angebote/${id}`, {
     rechnungsNr, rechnungsDatum, rechnungsBetreff, rechnungsEinleitung, rechnungsHinweise,
-    updatedAt: new Date().toISOString(),
-  }));
+  });
+  return result.index;
 }
 
 // ── Pure Helper-Funktionen ────────────────────────────────────────────────────
@@ -184,7 +168,7 @@ export function autoMarkAbgelaufen(angebote) {
   let changed = false;
   const updated = angebote.map(a => {
     if (a.status !== 'entwurf' && a.status !== 'gesendet') return a;
-    const datum = parseDEDate(a.snapshot?.gueltigBis);
+    const datum = parseDEDate(a.gueltigBis);
     if (!datum) return a;
     datum.setHours(0, 0, 0, 0);
     if (datum < heute) {
