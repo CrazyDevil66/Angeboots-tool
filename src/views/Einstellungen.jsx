@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Building2, CheckCircle2, ImagePlus, Trash2, FileText, CreditCard, Settings2, AlignLeft, BookOpen, Plus, Download, Upload, Users, Mail } from 'lucide-react';
 import FormField, { Input, Textarea, Select } from '../components/FormField';
 import FirmenPreview from '../components/FirmenPreview';
-import { saveFirma, saveKatalog, saveKunden, saveAngebote } from '../lib/storage';
+import { saveFirma, saveKatalog, saveKunden, saveAngebot, loadAngebote } from '../lib/storage';
 import { defaultData, einheiten } from '../lib/defaultData';
 import BenutzerVerwaltung from './BenutzerVerwaltung';
 import { apiGetSmtp, apiSaveSmtp, apiTestSmtp, clearToken } from '../lib/auth';
@@ -146,7 +146,12 @@ export default function Einstellungen({ token, currentUser, onLogout, firma, set
         if (backup.firma)    { await saveFirma(token, backup.firma);       setFirma(backup.firma); }
         if (backup.kunden)   { await saveKunden(token, backup.kunden);     setKunden(backup.kunden); }
         if (backup.katalog)  { await saveKatalog(token, backup.katalog);   setKatalog(backup.katalog); }
-        if (backup.angebote) { await saveAngebote(token, backup.angebote); setAngebote(backup.angebote); }
+        if (backup.angebote) {
+          for (const entry of backup.angebote) {
+            await saveAngebot(token, entry.snapshot || entry);
+          }
+          setAngebote(await loadAngebote(token));
+        }
         triggerSaved();
       } catch {
         alert('Ungültige Backup-Datei.');
