@@ -132,7 +132,11 @@ function patchOffer(id, patch) {
   if (!existing) throw new Error(`Angebot ${id} nicht gefunden`);
   const { snapshot, ...meta } = existing;
   const { id: _id, savedAt: _savedAt, snapshot: _snap, ...safePatch } = patch;
-  const newMeta = { ...meta, ...safePatch, updatedAt: new Date().toISOString() };
+  const netto = (snapshot?.positionen || []).reduce(
+    (s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0
+  );
+  const brutto = netto * (1 + Number(snapshot?.mwstSatz ?? 19) / 100);
+  const newMeta = { ...meta, ...safePatch, netto, brutto, updatedAt: new Date().toISOString() };
   writeOffer(id, { ...newMeta, snapshot });
   const index = readIndex().map(e => e.id === id ? newMeta : e);
   writeIndex(index);
