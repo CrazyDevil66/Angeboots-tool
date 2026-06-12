@@ -40,6 +40,7 @@ function getJwtSecret() {
 const JWT_SECRET = getJwtSecret();
 
 angeboteStore.migrateIfNeeded();
+angeboteStore.recalcBrutto();
 
 const sseClients = new Set();
 

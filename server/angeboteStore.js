@@ -201,6 +201,25 @@ function migrateIfNeeded() {
   fs.renameSync(oldFile, oldFile + '.migrated');
 }
 
+function recalcBrutto() {
+  const index = readIndex();
+  let changed = false;
+  const updated = index.map(entry => {
+    const offer = readOffer(entry.id);
+    if (!offer?.snapshot) return entry;
+    const netto = (offer.snapshot.positionen || []).reduce(
+      (s, p) => s + Number(p.menge) * Number(p.einzelpreis), 0
+    );
+    const brutto = netto * (1 + Number(offer.snapshot.mwstSatz ?? 19) / 100);
+    if (Math.abs(entry.netto - netto) < 0.001 && Math.abs(entry.brutto - brutto) < 0.001) return entry;
+    changed = true;
+    const newMeta = { ...entry, netto, brutto };
+    writeOffer(entry.id, { ...offer, netto, brutto });
+    return newMeta;
+  });
+  if (changed) writeIndex(updated);
+}
+
 module.exports = {
   readIndex,
   readOffer,
@@ -209,4 +228,5 @@ module.exports = {
   patchOffer,
   removeOffer,
   migrateIfNeeded,
+  recalcBrutto,
 };
