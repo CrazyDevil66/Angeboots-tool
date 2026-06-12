@@ -94,6 +94,15 @@ export default function BenutzerVerwaltung({ token, currentUser }) {
     }
   }
 
+  async function handleDemote(id) {
+    try {
+      await apiUpdateUser(token, id, { role: 'user' });
+      await load();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   const adminCount = userList.filter(u => u.role === 'admin').length;
 
   return (
@@ -131,6 +140,15 @@ export default function BenutzerVerwaltung({ token, currentUser }) {
                   >
                     <Shield size={11} />
                     Admin
+                  </button>
+                )}
+                {u.role === 'admin' && adminCount > 1 && u.id !== currentUser?.userId && (
+                  <button
+                    onClick={() => handleDemote(u.id)}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <Shield size={11} />
+                    Admin entziehen
                   </button>
                 )}
                 <button

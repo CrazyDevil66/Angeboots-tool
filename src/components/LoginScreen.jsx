@@ -57,7 +57,7 @@ export default function LoginScreen({ onComplete }) {
             value={username}
             onChange={e => setUsername(e.target.value)}
             className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2.5 text-white text-sm mb-4 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
-            placeholder="z. B. tolga"
+            placeholder="Benutzername"
             autoFocus
             required
           />

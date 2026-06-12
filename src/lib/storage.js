@@ -142,7 +142,7 @@ export function nextAngebotNr(angebote) {
   return `${prefix}${String(max + 1).padStart(3, '0')}`;
 }
 
-export function nextRechnungsNr(angebote) {
+export function nextRechnungsNr(angebote = []) {
   const year = new Date().getFullYear();
   const prefix = `R-${year}-`;
   let max = 0;
