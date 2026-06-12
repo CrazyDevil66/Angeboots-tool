@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './views/Dashboard';
 import AngeboteListe from './views/AngeboteListe';
 import AngebotEditor from './views/AngebotEditor';
+import RechnungenListe from './views/RechnungenListe';
 import KundenListe from './views/KundenListe';
 import Einstellungen from './views/Einstellungen';
 import LoginScreen from './components/LoginScreen';
@@ -122,6 +123,7 @@ export default function App() {
 
   const counts = useMemo(() => ({
     angebote: angebote.length,
+    rechnungen: angebote.filter(a => a.rechnungsNr && a.status !== 'bezahlt').length,
     kunden: kunden.length,
   }), [angebote, kunden]);
 
@@ -154,6 +156,7 @@ export default function App() {
       case 'dashboard':      return <Dashboard {...sharedProps} />;
       case 'angebote':       return <AngeboteListe {...sharedProps} />;
       case 'angebot-editor': return <AngebotEditor {...sharedProps} params={nav.params} />;
+      case 'rechnungen':     return <RechnungenListe {...sharedProps} />;
       case 'kunden':         return <KundenListe {...sharedProps} />;
       case 'einstellungen':  return <Einstellungen {...sharedProps} onLogout={handleLogout} />;
       default:               return <Dashboard {...sharedProps} />;

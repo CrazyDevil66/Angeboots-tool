@@ -1,9 +1,10 @@
-import { LayoutDashboard, FileText, Users, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Settings, LogOut, Receipt } from 'lucide-react';
 
 const MAIN_NAV = [
-  { id: 'dashboard',  label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'angebote',   label: 'Angebote',  icon: FileText },
-  { id: 'kunden',     label: 'Kunden',    icon: Users },
+  { id: 'dashboard',   label: 'Dashboard',  icon: LayoutDashboard },
+  { id: 'angebote',    label: 'Angebote',   icon: FileText },
+  { id: 'rechnungen',  label: 'Rechnungen', icon: Receipt },
+  { id: 'kunden',      label: 'Kunden',     icon: Users },
 ];
 
 function NavItem({ id, label, icon: Icon, active, count, onClick }) {
